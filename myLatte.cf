@@ -8,7 +8,11 @@ FnDef.	   TopDef ::= Type Ident "(" [Arg] ")" Block ;
 
 separator nonempty TopDef "" ;
 
-Arg.	   Arg ::= Type Ident;
+Argref.	   Arg ::= PassMode ReferencableType Ident;
+
+Argfun.    Arg ::= FunType Ident;
+
+PassMode.  PassMode ::= "val" | "ref" ;
 
 separator  Arg "," ;
 
@@ -24,7 +28,7 @@ BStmt.     Stmt ::= Block ;
 
 Decl.      Stmt ::= Type [Item] ";" ;
 
-NoInit.    Item ::= Ident ; 
+NoInit.    Item ::= Ident ;
 
 Init.      Item ::= Ident "=" Expr ;
 
@@ -38,8 +42,6 @@ Decr.      Stmt ::= Ident "--"  ";" ;
 
 Ret.       Stmt ::= "return" Expr ";" ;
 
-VRet.      Stmt ::= "return" ";" ;
-
 Cond.      Stmt ::= "if" "(" Expr ")" Stmt  ;
 
 CondElse.  Stmt ::= "if" "(" Expr ")" Stmt "else" Stmt  ;
@@ -50,16 +52,20 @@ SExp.      Stmt ::= Expr  ";" ;
 
 -- Types ---------------------------------------------------
 
-Int.       Type ::= "int" ;
+Type.      Type ::= ReferencableType | FunType ;
 
-Str.       Type ::= "string" ;
+Int.       ReferencableType ::= "int" ;
 
-Bool.      Type ::= "boolean" ;
+Str.       ReferencableType ::= "string" ;
+
+Bool.      ReferencableType ::= "boolean" ;
 
 -- CHANGE: remove void type:
 -- Void.      Type ::= "void" ;
 
 internal   Fun. Type ::= Type "(" [Type] ")" ;
+
+FunType.   FunType ::= "function" Type "(" [Arg] ")" ;
 
 separator  Type "," ;
 
@@ -74,6 +80,8 @@ ELitTrue.  Expr6 ::= "true" ;
 ELitFalse. Expr6 ::= "false" ;
 
 EApp.      Expr6 ::= Ident "(" [Expr] ")" ;
+
+LApp.      Expr6 ::= "lambda" "(" [Arg] ")" Block (Expr);
 
 EString.   Expr6 ::= String ;
 
@@ -90,6 +98,8 @@ ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
 EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 
 EOr.       Expr ::= Expr1 "||" Expr ;
+
+Lexpr.     Expr ::= "lambda" "(" [Arg] ")" Block ;
 
 coercions  Expr 6 ;
 
