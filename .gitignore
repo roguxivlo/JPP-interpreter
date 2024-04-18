@@ -3,3 +3,12 @@
 *.x
 *.info
 *.y
+TestMyLatte
+DocMyLatte.txt
+LexMyLatte.hs
+Makefile
+AbsMyLatte.hs
+ErrM.hs
+SkelMyLatte.hs
+TestMyLatte.hs
+*.bak
