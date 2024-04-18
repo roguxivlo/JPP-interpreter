@@ -1,3 +1,4 @@
+/*
 Robocza nazwa języka to myLatte, bardzo bazuje na składni Latte, z paroma różnicami:
 podawanie argumentów przez wartość zaznaczamy słówkiem val, przez zmienną słówkiem ref (oba są obowiązkowe).
 
@@ -11,56 +12,69 @@ Poniżej kilka przykładów ilustrujących niestandardowe elementy składni,
 oraz docelową realizację wymagań zadania.
 
 =========================================
+*/
+
+// PO LABACH 15 KWIETNIA:
+
 // pass by value vs pass by variable (reference):
 int someFun(val int a, ref int b) {
     a = 10;
     b = 10;
     return a+b;
 }
-=========================================
 
-=========================================
-// assign function to variable:
-function string(val int, val string) myFunc = lambda (val int a, val string b) { return b; };
-
-function int(val int, ref int) myFunc2 = someFun; 
-=========================================
-
-=========================================
-// Anonymous functions:
-int x = lambda (val int a) { return a; } (123);
-print(x); // 123
-
-=========================================
-
-=========================================
+//=========================================
 // higher order function (return function):
-function int(val int) adderMaker(val int a) {
+function int(val int x) adderMaker(val int a) {
     return lambda (val int b) { return a+b; };
 }
 
-function int(val int) add10 = adderMaker(10);
-=========================================
-
-=========================================
+//=========================================
 // higher order function (get function as argument):
-int composer(val int a, val int b, function int(val int, val int) f) {
+int composer(val int a, val int b, function int(val int a, val int s) f) {
     return f(a,b);
 }
 
-=========================================
+//=========================================
 
-=========================================
-// some closures:
-function int() counter = lambda () { 
-    int count = 0;
-    return lambda { 
-        count = count + 1;
-        return count;
-    };
-    }();
 
-print(counter()); // 1
-print(counter()); // 2
-print(counter()); // 3
-=========================================
+//=========================================
+ int main() {
+    
+
+    //=========================================
+    // assign function to variable:
+    function string (val int x, val string y) myFunc;//=lambda (val int a, val string b) { return b; };
+
+    function int(val int x, ref int y) myFunc2 = someFun; 
+    //=========================================
+
+    //=========================================
+    // Anonymous functions:
+    int x = lambda (val int a) { return a; } (123);
+    print(x); // 123
+
+    //=========================================
+
+    
+
+    function int(val int x) add10 = adderMaker(10);
+    //=========================================
+
+    
+
+    //=========================================
+    // some closures:
+    function int() counter = lambda () { 
+        int count = 0;
+        return lambda (){ 
+            count = count + 1;
+            return count;
+        };
+        }();
+
+    print(counter()); // 1
+    print(counter()); // 2
+    print(counter()); // 3
+    //=========================================
+}

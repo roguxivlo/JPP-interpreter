@@ -6,6 +6,8 @@
 TestMyLatte
 DocMyLatte.txt
 LexMyLatte.hs
+ParMyLatte.hs
+PrintMyLatte.hs
 Makefile
 AbsMyLatte.hs
 ErrM.hs
