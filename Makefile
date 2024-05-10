@@ -14,11 +14,11 @@ ALEX_OPTS  = --ghc
 
 # Default goal.
 
-all : MyLatte/Test
+all : MyLatte/Test Interpreter
 
 # Rules for building the parser.
 
-MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs : myLatte.cf
+MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Interpreter.hs: myLatte.cf
 	bnfc --haskell -d --functor myLatte.cf
 
 %.hs : %.y
@@ -30,13 +30,17 @@ MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs : my
 MyLatte/Test : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs MyLatte/Test.hs
 	${GHC} ${GHC_OPTS} $@
 
+Interpreter : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs
+	${GHC} ${GHC_OPTS} $@
+
 # Rules for cleaning generated files.
 
 clean :
-	-rm -f MyLatte/*.hi MyLatte/*.o MyLatte/*.log MyLatte/*.aux MyLatte/*.dvi
+	-rm -f MyLatte/*.hi MyLatte/*.o MyLatte/*.log MyLatte/*.aux MyLatte/*.dvi *.hi *.o *.log *.aux *.dvi
 
 distclean : clean
-	-rm -f MyLatte/Abs.hs MyLatte/Abs.hs.bak MyLatte/ComposOp.hs MyLatte/ComposOp.hs.bak MyLatte/Doc.txt MyLatte/Doc.txt.bak MyLatte/ErrM.hs MyLatte/ErrM.hs.bak MyLatte/Layout.hs MyLatte/Layout.hs.bak MyLatte/Lex.x MyLatte/Lex.x.bak MyLatte/Par.y MyLatte/Par.y.bak MyLatte/Print.hs MyLatte/Print.hs.bak MyLatte/Skel.hs MyLatte/Skel.hs.bak MyLatte/Test.hs MyLatte/Test.hs.bak MyLatte/XML.hs MyLatte/XML.hs.bak MyLatte/AST.agda MyLatte/AST.agda.bak MyLatte/Parser.agda MyLatte/Parser.agda.bak MyLatte/IOLib.agda MyLatte/IOLib.agda.bak MyLatte/Main.agda MyLatte/Main.agda.bak MyLatte/myLatte.dtd MyLatte/myLatte.dtd.bak MyLatte/Test MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Par.info MyLatte/ParData.hs Makefile
+	-rm -f MyLatte/Abs.hs MyLatte/Abs.hs.bak MyLatte/ComposOp.hs MyLatte/ComposOp.hs.bak MyLatte/Doc.txt MyLatte/Doc.txt.bak MyLatte/ErrM.hs MyLatte/ErrM.hs.bak MyLatte/Layout.hs MyLatte/Layout.hs.bak MyLatte/Lex.x MyLatte/Lex.x.bak MyLatte/Par.y MyLatte/Par.y.bak MyLatte/Print.hs MyLatte/Print.hs.bak MyLatte/Skel.hs MyLatte/Skel.hs.bak MyLatte/Test.hs MyLatte/Test.hs.bak MyLatte/XML.hs MyLatte/XML.hs.bak MyLatte/AST.agda MyLatte/AST.agda.bak MyLatte/Parser.agda MyLatte/Parser.agda.bak MyLatte/IOLib.agda MyLatte/IOLib.agda.bak MyLatte/Main.agda MyLatte/Main.agda.bak MyLatte/myLatte.dtd MyLatte/myLatte.dtd.bak MyLatte/Test MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Par.info MyLatte/ParData.hs
 	-rmdir -p MyLatte/
+	-rm -f Interpreter
 
 # EOF
