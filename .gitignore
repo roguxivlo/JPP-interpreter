@@ -13,3 +13,4 @@ ErrM.hs
 SkelMyLatte.hs
 TestMyLatte.hs
 *.bak
+MyLatte/*
