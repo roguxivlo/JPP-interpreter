@@ -2,21 +2,27 @@
 
 entrypoints Program ;
 
-Program.   Program ::= [TopDef] ;
+Program.   Program ::= [Stmt] ;
 
-FnDef.	   TopDef ::= Type Ident "(" [Arg] ")" Block ;
+FnDef.	   Stmt ::= Type Ident "(" [Arg] ")" Block ;
 
-separator nonempty TopDef "" ;
+-- separator nonempty TopDef "" ;
 
-Argref.	   Arg ::= PassMode ReferencableType Ident;
+ArgTypeRef. ArgType ::= "ref" ReferencableType;
 
-Argfun.    Arg ::= FunType Ident;
+ArgTypeVal. ArgType ::= "val" ReferencableType;
+
+ArgTypeFun. ArgType ::= FunType;
+
+Arg.        Arg ::= ArgType Ident ;
 
 PassValue.  PassMode ::= "val";
 
 PassRef.    PassMode ::= "ref";
 
-separator  Arg "," ;
+separator   Arg "," ;
+
+separator   ArgType "," ;
 
 -- statements ----------------------------------------------
 
@@ -67,9 +73,9 @@ Bool.      ReferencableType ::= "boolean" ;
 -- CHANGE: remove void type:
 -- Void.      Type ::= "void" ;
 
-internal   Fun. Type ::= Type "(" [Type] ")" ;
+internal   Fun. Type ::= Type "(" [ArgType] ")" ;
 
-FunctionType.   FunType ::= "function" Type "(" [Arg] ")" ;
+FunctionType.   FunType ::= "function" Type "(" [ArgType] ")" ;
 
 separator  Type "," ;
 
