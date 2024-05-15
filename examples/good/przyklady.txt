@@ -25,13 +25,13 @@ int someFun(val int a, ref int b) {
 
 //=========================================
 // higher order function (return function):
-function int(val int x) adderMaker(val int a) {
+function int(val int) adderMaker(val int a) {
     return lambda (val int b) { return a+b; };
 }
 
 //=========================================
 // higher order function (get function as argument):
-int composer(val int a, val int b, function int(val int a, val int s) f) {
+int composer(val int a, val int b, function int(val int, val int) f) {
     return f(a,b);
 }
 
@@ -44,9 +44,9 @@ int composer(val int a, val int b, function int(val int a, val int s) f) {
 
     //=========================================
     // assign function to variable:
-    function string (val int x, val string y) myFunc;//=lambda (val int a, val string b) { return b; };
+    function string (val int, val string) myFunc =lambda (val int a, val string b) { return b; };
 
-    function int(val int x, ref int y) myFunc2 = someFun; 
+    function int(val int, ref int) myFunc2 = someFun; 
     //=========================================
 
     //=========================================
@@ -58,7 +58,7 @@ int composer(val int a, val int b, function int(val int a, val int s) f) {
 
     
 
-    function int(val int x) add10 = adderMaker(10);
+    function int(val int) add10 = adderMaker(10);
     //=========================================
 
     

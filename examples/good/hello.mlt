@@ -1,1 +1,7 @@
-int x = print("Hello, World!\n");
+int main (int xz) {
+    int x;
+    x = 1;
+    return x;
+}
+
+string x = main(1);

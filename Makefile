@@ -3,6 +3,7 @@
 # Makefile for building the parser and test program.
 
 GHC        = ghc
+GHC_OPTS   = -package containers -package mtl
 HAPPY      = happy
 HAPPY_OPTS = --array --info --ghc --coerce
 ALEX       = alex
@@ -30,7 +31,7 @@ MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Inte
 MyLatte/Test : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs MyLatte/Test.hs
 	${GHC} ${GHC_OPTS} $@
 
-Interpreter : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs
+Interpreter : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs Types.hs
 	${GHC} ${GHC_OPTS} $@
 
 # Rules for cleaning generated files.
