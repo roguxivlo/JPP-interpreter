@@ -17,16 +17,18 @@ import Text.ParserCombinators.ReadP (get)
 
 type Env = M.Map Ident Type
 
-type TypeCheckMonad = ReaderT Env (ExceptT Exception IO)
+type ReturnType = Maybe Type
+
+type TypeCheckMonad = ReaderT (Env, ReturnType) (ExceptT Exception IO)
 
 -- typeCheckBlock :: Block -> TypeCheckMonad Env
 -- typeCheckBlock (Block location statements) = do
 
-typeCheckStatements :: [Stmt] -> TypeCheckMonad Env
+typeCheckStatements :: [Stmt] -> TypeCheckMonad (Env, ReturnType)
 typeCheckStatements [] = ask
 typeCheckStatements (head : tail) = do
-  env <- typeCheckStatement head
-  local (const env) (typeCheckStatements tail)
+  (env, rt) <- typeCheckStatement head
+  local (const (env, rt)) (typeCheckStatements tail)
 
 -- exctract FunctionType from function definition:
 getFunctionType :: Type -> [Arg] -> Type
@@ -50,18 +52,18 @@ insertArgs ((Arg _ argType ident) : tail) env = do
   insertArgs tail updatedEnv
 
 -- insert items into environment:
-insertItems :: [Item] -> Type -> TypeCheckMonad Env
+insertItems :: [Item] -> Type -> TypeCheckMonad (Env, ReturnType)
 insertItems ((NoInit _ ident) : tail) type_ = do
-  env <- ask
+  (env, rt) <- ask
   let updatedEnv = M.insert ident type_ env
-  local (const updatedEnv) (insertItems tail type_)
+  local (const (updatedEnv, rt)) (insertItems tail type_)
 insertItems ((Init pos ident expr) : tail) type_ = do
-  env <- ask
+  (env, rt) <- ask
   maybeExprType <- typeCheckExpr expr
   case cmpTypes (Just type_) maybeExprType of
     True -> do
       let updatedEnv = M.insert ident type_ env
-      local (const updatedEnv) (insertItems tail type_)
+      local (const (updatedEnv, rt)) (insertItems tail type_)
     False -> throwError $ BadType (show type_, show maybeExprType) $ posToLC pos
 insertItems [] _ = ask
 
@@ -92,26 +94,26 @@ cmpTypes _ (Just (FunctionType _ _ _)) = False
 cmpTypes (Just t1) (Just t2) = dropPos t1 == dropPos t2
 cmpTypes _ _ = False
 
-typeCheckStatement :: Stmt -> TypeCheckMonad Env
+typeCheckStatement :: Stmt -> TypeCheckMonad (Env, ReturnType)
 -- Function definition: FnDef
 typeCheckStatement (FnDef position returnType ident args block) = do
-  env <- ask
+  (env, rt) <- ask
   -- insert function into environment:
   let updatedEnv = M.insert ident (getFunctionType returnType args) env
   -- insert arguments into environment:
   let updatedEnvWithArgs = insertArgs args updatedEnv
+  let retType = getReturnTypeFromFun (M.lookup ident updatedEnvWithArgs)
   -- check block:
-  local (const updatedEnvWithArgs) (typeCheckStatements [BStmt position block])
-  return updatedEnv
+  local (const (updatedEnvWithArgs, retType)) (typeCheckStatements [BStmt position block])
+  return (updatedEnv, rt)
 
 -- Block: BStmt
 typeCheckStatement (BStmt _ block) = do
-  env <- ask
+  (env, rt) <- ask
   let stms = getStatements block
-  local (const env) (typeCheckStatements stms)
+  local (const (env, rt)) (typeCheckStatements stms)
 
 -- Declaration: Decl
--- FIX!
 typeCheckStatement (Decl _ type_ items) = do
   updatedEnv <- insertItems items type_
   return updatedEnv
@@ -119,30 +121,36 @@ typeCheckStatement (Decl _ type_ items) = do
 -- Assignment: Ass
 typeCheckStatement (Ass pos ident expr) = do
   expectedT <- typeCheckExpr expr
-  env <- ask
+  (env, rt) <- ask
   let maybeActualT = M.lookup ident env
   case cmpTypes maybeActualT expectedT of
-    True -> return env
+    True -> return (env, rt)
     False -> throwError $ BadType (show expectedT, show maybeActualT) $ posToLC pos
 
 -- Incrementation: Incr
 typeCheckStatement (Incr pos ident) = do
-  env <- ask
+  (env, rt) <- ask
   let maybeActualT = M.lookup ident env
   case maybeActualT of
-    Just (Int _) -> return env
+    Just (Int _) -> return (env, rt)
     _ -> throwError $ BadType ("Int", show maybeActualT) $ posToLC pos
 
 -- Decrementation: Decr
 typeCheckStatement (Decr pos ident) = do
-  env <- ask
+  (env, rt) <- ask
   let maybeActualT = M.lookup ident env
   case maybeActualT of
-    Just (Int _) -> return env
+    Just (Int _) -> return (env, rt)
     _ -> throwError $ BadType ("Int", show maybeActualT) $ posToLC pos
 
 -- TODO: Returning value from function: Ret
-typeCheckStatement (Ret pos e) = ask
+typeCheckStatement (Ret pos e) = do
+  (env, rt) <- ask
+  maybeActualRType <- typeCheckExpr e
+  case cmpTypes rt maybeActualRType of
+    True -> return (env, rt)
+    False -> throwError $ BadType (show rt, show maybeActualRType) $ posToLC pos
+
 -- Conditional statement: Cond
 typeCheckStatement (Cond pos e1 stmt) = do
   maybeT <- typeCheckExpr e1
@@ -176,7 +184,7 @@ getArgsFromFun (Just (FunctionType _ _ [])) = Just []
 getArgsFromFun (Just (FunctionType _ _ args)) = Just (map fromArgTypeToType args)
 getArgsFromFun _ = Nothing
 
-getReturnTypeFromFun :: Maybe Type -> Maybe Type
+getReturnTypeFromFun :: Maybe Type -> ReturnType
 getReturnTypeFromFun (Just (FunctionType _ retType _)) = Just retType
 getReturnTypeFromFun _ = Nothing
 
@@ -184,7 +192,7 @@ getReturnTypeFromFun _ = Nothing
 typeCheckExpr :: Expr -> TypeCheckMonad (Maybe Type)
 -- Variable identificator
 typeCheckExpr (EVar pos ident) = do
-  env <- ask
+  (env, rt) <- ask
   let maybeType = M.lookup ident env
   return maybeType
 -- Literals
@@ -197,7 +205,7 @@ typeCheckExpr (ELitFalse pos) = do
 
 -- Function applications:
 typeCheckExpr (EApp pos ident argExprs) = do
-  env <- ask
+  (env, rt) <- ask
   let maybeFType = M.lookup ident env
   let maybeArgs = getArgsFromFun maybeFType
   let maybeReturnType = getReturnTypeFromFun maybeFType
@@ -275,5 +283,5 @@ typeCheckExpr (EOr pos exp1 exp2) = do
 
 -- TODO: Lambda expressions:
 
-typeCheck :: Program -> IO (Either Exception Env)
-typeCheck (Program _ stmts) = runExceptT (runReaderT (typeCheckStatements stmts) M.empty)
+typeCheck :: Program -> IO (Either Exception (Env, ReturnType))
+typeCheck (Program _ stmts) = runExceptT (runReaderT (typeCheckStatements stmts) (M.empty, Nothing))

@@ -16,4 +16,5 @@ TestMyLatte.hs
 MyLatte/
 notes.txt
 Interpreter
-output/
+good/output/
+bad/output/

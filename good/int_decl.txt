@@ -1,2 +1,3 @@
 int x;
 int y = 0;
+string a, b="abc", d = "aaa", e = d, s;

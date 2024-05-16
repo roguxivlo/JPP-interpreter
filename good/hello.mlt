@@ -4,4 +4,4 @@ int main (int xz) {
     return x;
 }
 
-string x = main(1);
+string x = "main(1)";
