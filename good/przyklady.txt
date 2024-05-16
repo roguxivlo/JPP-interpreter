@@ -1,6 +1,6 @@
 /*
 Robocza nazwa języka to myLatte, bardzo bazuje na składni Latte, z paroma różnicami:
-podawanie argumentów przez wartość zaznaczamy słówkiem val, przez zmienną słówkiem ref (oba są obowiązkowe).
+podawanie argumentów przez wartość zaznaczamy słówkiem , przez zmienną słówkiem ref (oba są obowiązkowe).
 
 Każda zadeklarowana funkcja musi mieć zadeklarowany typ zwracany (nie może to być void).
 
@@ -16,22 +16,22 @@ oraz docelową realizację wymagań zadania.
 
 // PO LABACH 15 KWIETNIA:
 
-// pass by value vs pass by variable (reference):
+// pass by ue vs pass by variable (reference):
 int someFun(int a, ref int b) {
-    a = 10;
-    b = 10;
+    int a = 10;
+    int b = 10;
     return a+b;
 }
 
 //=========================================
 // higher order function (return function):
-function int(val int) adderMaker(val int a) {
-    return lambda (val int b) { return a+b; };
+int(int) adderMaker( int a) {
+    return lambda ( int b) { return a+b; };
 }
 
 //=========================================
 // higher order function (get function as argument):
-int composer(val int a, val int b, function int(val int, val int) f) {
+int composer( int a,  int b, int( int,  int) f) {
     return f(a,b);
 }
 
@@ -44,28 +44,28 @@ int composer(val int a, val int b, function int(val int, val int) f) {
 
     //=========================================
     // assign function to variable:
-    function string (val int, val string) myFunc =lambda (val int a, val string b) { return b; };
+    string ( int,  string) myFunc =lambda ( int a,  string b) { return b; };
 
-    function int(val int, ref int) myFunc2 = someFun; 
+    int( int, ref int) myFunc2 = someFun; 
     //=========================================
 
     //=========================================
     // Anonymous functions:
-    int x = lambda (val int a) { return a; } (123);
+    int x = lambda ( int a) { return a; } (123);
     print(x); // 123
 
     //=========================================
 
     
 
-    function int(val int) add10 = adderMaker(10);
+    int( int) add10 = adderMaker(10);
     //=========================================
 
     
 
     //=========================================
     // some closures:
-    function int() counter = lambda () { 
+    int() counter = lambda () { 
         int count = 0;
         return lambda (){ 
             count = count + 1;
