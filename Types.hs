@@ -50,14 +50,20 @@ insertArgs ((Arg _ argType ident) : tail) env = do
   insertArgs tail updatedEnv
 
 -- insert items into environment:
-insertItems :: [Item] -> Type -> Env -> Env
-insertItems ((NoInit _ ident) : tail) type_ env = do
+insertItems :: [Item] -> Type -> TypeCheckMonad Env
+insertItems ((NoInit _ ident) : tail) type_ = do
+  env <- ask
   let updatedEnv = M.insert ident type_ env
-  insertItems tail type_ updatedEnv
-insertItems ((Init _ ident expr) : tail) type_ env = do
-  let updatedEnv = M.insert ident type_ env
-  insertItems tail type_ updatedEnv
-insertItems [] _ env = env
+  local (const updatedEnv) (insertItems tail type_)
+insertItems ((Init pos ident expr) : tail) type_ = do
+  env <- ask
+  maybeExprType <- typeCheckExpr expr
+  case cmpTypes (Just type_) maybeExprType of
+    True -> do
+      let updatedEnv = M.insert ident type_ env
+      local (const updatedEnv) (insertItems tail type_)
+    False -> throwError $ BadType (show type_, show maybeExprType) $ posToLC pos
+insertItems [] _ = ask
 
 -- Get statements from a block:
 getStatements :: Block -> [Stmt]
@@ -107,8 +113,7 @@ typeCheckStatement (BStmt _ block) = do
 -- Declaration: Decl
 -- FIX!
 typeCheckStatement (Decl _ type_ items) = do
-  env <- ask
-  let updatedEnv = insertItems items type_ env
+  updatedEnv <- insertItems items type_
   return updatedEnv
 
 -- Assignment: Ass
