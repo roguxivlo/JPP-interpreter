@@ -1,0 +1,8 @@
+print("Enter the number of repetitions: ");
+int reps = readInt();
+print("now counting...\n");
+int counter = 0;
+while (counter <= reps) {
+    print(counter);
+    counter = counter + 1;
+}

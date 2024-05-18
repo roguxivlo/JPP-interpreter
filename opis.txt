@@ -1,0 +1,105 @@
+/*
+Robocza nazwa języka to myLatte, bardzo bazuje na składni Latte, z paroma różnicami:
+podawanie argumentów przez wartość zaznaczamy słówkiem , przez zmienną słówkiem ref (oba są obowiązkowe).
+
+Każda zadeklarowana funkcja musi mieć zadeklarowany typ zwracany (nie może to być void).
+
+Jeśli funkcja zwraca funkcję, to musi to być zadeklarowane jako function typ_zwracany (argumenty).
+
+Funkcje anonimowe zapisujemy jako: lambda (argumenty) { ciało }. Aplikujemy lambdy tak jak normalne funkcje.
+
+Poniżej kilka przykładów ilustrujących niestandardowe elementy składni,
+oraz docelową realizację wymagań zadania.
+
+=========================================
+*/
+
+// PO LABACH 15 KWIETNIA:
+
+// pass by ue vs pass by variable (reference):
+int someFun(int a, ref int b) {
+    int a = 10;
+    int b = 10;
+    return a+b;
+}
+
+//=========================================
+// higher order function (return function):
+int(int) adderMaker( int a) {
+    return lambda ( int b) { return a+b; };
+}
+
+//=========================================
+// higher order function (get function as argument):
+int composer( int a,  int b, int( int,  int) f) {
+    return f(a,b);
+}
+
+//=========================================
+
+
+//=========================================
+ int main() {
+    
+
+    //=========================================
+    // assign function to variable:
+    string ( int,  string) myFunc =lambda ( int a,  string b) { return b; };
+
+    int( int, ref int) myFunc2 = someFun; 
+    //=========================================
+
+    //=========================================
+    // Anonymous functions:
+    int x = lambda ( int a) { return a; } (123);
+    print(x); // 123
+
+    //=========================================
+
+    
+
+    int( int) add10 = adderMaker(10);
+    //=========================================
+
+    
+
+    //=========================================
+    // some closures:
+    int() counter = lambda () { 
+        int count = 0;
+        return lambda (){ 
+            count = count + 1;
+            return count;
+        };
+        }();
+
+    print(counter()); // 1
+    print(counter()); // 2
+    print(counter()); // 3
+    //=========================================
+}
+
+
+
+=======================================================
+/*
+
+Cechy języka:
+
+1. W przypadku deklaracji bez inicjalizacji, zmiennej nadawana jest wartość domyślna:
+    - dla int: 0
+    - dla string: ""
+    - dla bool: false
+    - dla funkcji: null
+
+2. można porównywać jedynie liczby całkowite.
+
+3. Funkcja print przyjmuje jeden argument typu int, string lub boolean.
+Argument jest przekazywany przez wartość. Funkcja wypisuje argument
+na standardowe wyjście, oraz zwraca wartość swojego argumentu.
+
+4. Wczytanie danych wejściowych odbywa się za pomocą funkcji:
+    - int readInt()
+    - string readString()
+
+*/

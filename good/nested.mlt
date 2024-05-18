@@ -1,0 +1,14 @@
+int main(int z) {
+    string sub(int z) {
+        print(z+1);
+        return "hi from sub";
+    }
+    string sup(int x) {
+        print(x);
+        print(z);
+        return sub(x);
+    }
+
+    print(sup(5));
+    return 0;
+}

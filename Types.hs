@@ -8,12 +8,8 @@ import Data.List (zipWith)
 import Data.Map qualified as M
 import Data.Maybe (Maybe, fromMaybe)
 import Exception
-import Foreign.C (eNODEV)
-import GHC.IOPort (newEmptyIOPort)
-import GHC.ResponseFile (expandResponse)
 import MyLatte.Abs
 import MyLatte.Abs (ArgType, BNFC'Position)
-import Text.ParserCombinators.ReadP (get)
 
 type Env = M.Map Ident Type
 
@@ -213,25 +209,60 @@ typeCheckExpr (ELitFalse pos) = do
   return $ Just (Bool pos)
 
 -- Function applications:
+-- "print" function:
+-- takes one argument, a value to print (int or string or boolean)
+-- returns printed value
+typeCheckExpr (EApp pos (Ident "print") argExprs) = do
+  (env, rt) <- ask
+  -- check number of arguments:
+  case 1 == (length argExprs) of
+    False -> throwError $ BadNumberOfArguments 1 (length argExprs) $ posToLC pos
+    True -> do
+      -- check type of argument:
+      maybeArgType <- typeCheckExpr (head argExprs)
+      case maybeArgType of
+        Just (Int _) -> return $ Just (Int pos)
+        Just (Str _) -> return $ Just (Str pos)
+        Just (Bool _) -> return $ Just (Bool pos)
+        _ -> throwError $ BadType ("Int, Str or Bool", show maybeArgType) $ posToLC pos
+-- "readInt" function:
+-- takes no arguments, returns integer read from stdin
+typeCheckExpr (EApp pos (Ident "readInt") []) = do
+  return $ Just (Int pos)
+typeCheckExpr (EApp pos (Ident "readInt") argExprs) = do
+  throwError $ BadNumberOfArguments 0 (length argExprs) $ posToLC pos
+
+-- "readString" function:
+-- takes no arguments, returns string read from stdin
+typeCheckExpr (EApp pos (Ident "readString") []) = do
+  return $ Just (Str pos)
+typeCheckExpr (EApp pos (Ident "readString") argExprs) = do
+  throwError $ BadNumberOfArguments 0 (length argExprs) $ posToLC pos
+
+-- user defined functions:
 typeCheckExpr (EApp pos ident argExprs) = do
   (env, rt) <- ask
   let maybeFType = M.lookup ident env
-  let maybeArgs = getArgsFromFun maybeFType
-  let maybeReturnType = getReturnTypeFromFun maybeFType
-  (nArgsOk, expected, provided) <- checkNArgs maybeArgs argExprs
-  case nArgsOk of
-    False -> throwError $ BadNumberOfArguments expected provided $ posToLC pos
-    True ->
-      case maybeArgs of
-        Just args -> do
-          maybeArgTypes <- mapM typeCheckExpr argExprs
-          case maybeArgTypes of
-            [] -> do return maybeReturnType
-            _ -> do
-              let ok = and (zipWith cmpTypes (map Just args) maybeArgTypes)
-              case ok of
-                True -> return maybeReturnType
-                False -> throwError $ BadType ("Function arguments", show maybeArgTypes) $ posToLC pos
+  -- check if function exists:
+  case maybeFType of
+    Nothing -> throwError $ FunctionNotDefined (show ident) $ posToLC pos
+    Just _ -> do
+      let maybeArgs = getArgsFromFun maybeFType
+      let maybeReturnType = getReturnTypeFromFun maybeFType
+      (nArgsOk, expected, provided) <- checkNArgs maybeArgs argExprs
+      case nArgsOk of
+        False -> throwError $ BadNumberOfArguments expected provided $ posToLC pos
+        True ->
+          case maybeArgs of
+            Just args -> do
+              maybeArgTypes <- mapM typeCheckExpr argExprs
+              case maybeArgTypes of
+                [] -> do return maybeReturnType
+                _ -> do
+                  let ok = and (zipWith cmpTypes (map Just args) maybeArgTypes)
+                  case ok of
+                    True -> return maybeReturnType
+                    False -> throwError $ BadType ("Function arguments", show maybeArgTypes) $ posToLC pos
 
 -- TODO: Lambda Applications:
 
@@ -274,10 +305,9 @@ typeCheckExpr (EAdd pos exp1 _ exp2) = do
 typeCheckExpr (ERel pos exp1 _ exp2) = do
   maybeType1 <- typeCheckExpr exp1
   maybeType2 <- typeCheckExpr exp2
-  case cmpTypes maybeType1 maybeType2 of
-    True -> return $ Just (Bool pos)
-    False -> throwError $ BadType ("Types have to be the same", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
-
+  case (maybeType1, maybeType2) of
+    (Just (Int _), Just (Int _)) -> return $ Just (Bool pos)
+    _ -> throwError $ BadType ("Int", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
 -- Logical And:
 typeCheckExpr (EAnd pos exp1 exp2) = do
   maybeType1 <- typeCheckExpr exp1

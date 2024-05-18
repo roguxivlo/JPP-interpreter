@@ -1,12 +1,13 @@
 module Main where
 
+import Interpreter (interpret)
 import MyLatte.Abs
 import MyLatte.ErrM
 import MyLatte.Par
 import System.Environment (getArgs)
 import System.IO (hPutStrLn, stderr)
 import Types (typeCheck)
-import Prelude (Either (..), FilePath, IO, print, putStr, putStrLn, readFile, show)
+import Prelude (Either (..), FilePath, IO, print, putStr, putStrLn, readFile, return, show)
 
 runFile :: FilePath -> IO ()
 runFile f = do
@@ -21,7 +22,11 @@ runFile f = do
       -- if an error occured, print it to stderr
       case result of
         Left e -> hPutStrLn stderr (show e)
-        Right _ -> print result
+        Right _ -> do
+          result <- interpret (Program location stmts)
+          case result of
+            Left e -> hPutStrLn stderr (show e)
+            Right _ -> return ()
 
 main :: IO ()
 main = do
