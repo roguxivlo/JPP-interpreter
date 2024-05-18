@@ -15,11 +15,11 @@ ALEX_OPTS  = --ghc
 
 # Default goal.
 
-all : MyLatte/Test Interpreter
+all : MyLatte/Test Main
 
 # Rules for building the parser.
 
-MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Interpreter.hs: myLatte.cf
+MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Main.hs Types.hs Interpreter.hs: myLatte.cf
 	bnfc --haskell -d --functor myLatte.cf
 
 %.hs : %.y
@@ -31,7 +31,7 @@ MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Inte
 MyLatte/Test : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs MyLatte/Test.hs
 	${GHC} ${GHC_OPTS} $@
 
-Interpreter : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs Types.hs
+Main : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs Types.hs
 	${GHC} ${GHC_OPTS} $@
 
 # Rules for cleaning generated files.
@@ -42,6 +42,6 @@ clean :
 distclean : clean
 	-rm -f MyLatte/Abs.hs MyLatte/Abs.hs.bak MyLatte/ComposOp.hs MyLatte/ComposOp.hs.bak MyLatte/Doc.txt MyLatte/Doc.txt.bak MyLatte/ErrM.hs MyLatte/ErrM.hs.bak MyLatte/Layout.hs MyLatte/Layout.hs.bak MyLatte/Lex.x MyLatte/Lex.x.bak MyLatte/Par.y MyLatte/Par.y.bak MyLatte/Print.hs MyLatte/Print.hs.bak MyLatte/Skel.hs MyLatte/Skel.hs.bak MyLatte/Test.hs MyLatte/Test.hs.bak MyLatte/XML.hs MyLatte/XML.hs.bak MyLatte/AST.agda MyLatte/AST.agda.bak MyLatte/Parser.agda MyLatte/Parser.agda.bak MyLatte/IOLib.agda MyLatte/IOLib.agda.bak MyLatte/Main.agda MyLatte/Main.agda.bak MyLatte/myLatte.dtd MyLatte/myLatte.dtd.bak MyLatte/Test MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Par.info MyLatte/ParData.hs
 	-rmdir -p MyLatte/
-	-rm -f Interpreter
+	-rm -f Main
 
 # EOF

@@ -188,6 +188,15 @@ getReturnTypeFromFun :: Maybe Type -> ReturnType
 getReturnTypeFromFun (Just (FunctionType _ retType _)) = Just retType
 getReturnTypeFromFun _ = Nothing
 
+checkNArgs :: Maybe [Type] -> [Expr] -> TypeCheckMonad (Bool, Int, Int)
+checkNArgs (Just args) exprs = do
+  let nArgs = length args
+  let nExprs = length exprs
+  return (nArgs == nExprs, nArgs, nExprs)
+checkNArgs Nothing exprs = do
+  let nExprs = length exprs
+  return (nExprs == 0, 0, nExprs)
+
 -- Expressions:
 typeCheckExpr :: Expr -> TypeCheckMonad (Maybe Type)
 -- Variable identificator
@@ -209,16 +218,20 @@ typeCheckExpr (EApp pos ident argExprs) = do
   let maybeFType = M.lookup ident env
   let maybeArgs = getArgsFromFun maybeFType
   let maybeReturnType = getReturnTypeFromFun maybeFType
-  case maybeArgs of
-    Just args -> do
-      maybeArgTypes <- mapM typeCheckExpr argExprs
-      case maybeArgTypes of
-        [] -> do return maybeReturnType
-        _ -> do
-          let ok = and (zipWith cmpTypes (map Just args) maybeArgTypes)
-          case ok of
-            True -> return maybeReturnType
-            False -> throwError $ BadType ("Function arguments", show maybeArgTypes) $ posToLC pos
+  (nArgsOk, expected, provided) <- checkNArgs maybeArgs argExprs
+  case nArgsOk of
+    False -> throwError $ BadNumberOfArguments expected provided $ posToLC pos
+    True ->
+      case maybeArgs of
+        Just args -> do
+          maybeArgTypes <- mapM typeCheckExpr argExprs
+          case maybeArgTypes of
+            [] -> do return maybeReturnType
+            _ -> do
+              let ok = and (zipWith cmpTypes (map Just args) maybeArgTypes)
+              case ok of
+                True -> return maybeReturnType
+                False -> throwError $ BadType ("Function arguments", show maybeArgTypes) $ posToLC pos
 
 -- TODO: Lambda Applications:
 

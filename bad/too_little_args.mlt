@@ -1,0 +1,6 @@
+int main(int x, string y, boolean z) {
+    return 0;
+}
+
+// za mała liczba argumentów
+int a = main(1, "a");

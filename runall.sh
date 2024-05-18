@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the path to the Interpreter executable
-INTERPRETER="./Interpreter"
+INTERPRETER="./Main"
 
 # Directory containing files to process
 GOOD_FILES_DIRECTORY="good/"
