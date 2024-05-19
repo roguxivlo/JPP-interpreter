@@ -1,21 +1,55 @@
-module Interpreter where
+-- Interpreter for MyLatte language
+{-# LANGUAGE ImportQualifiedPost #-}
 
+module Interpreter (interpret) where
+
+import Control.Exception (throw)
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map qualified as M
+-- for debugging, import Trace
+import Debug.Trace
+import Debug.Trace (trace)
 import Exception
-import Exception (Exception (Other, VariableNotDeclared), posToLC)
+import Exception (Exception (InvalidPassByReference, NoReturn, Other, VariableNotDeclared), posToLC)
 import GHC.Show (Show)
 import MyLatte.Abs
-import MyLatte.Abs (Expr)
+import MyLatte.Abs (BNFC'Position, Expr)
 
-data Val = Vint Integer | Vbool Bool | Vstr String
+-- data Varg = Reference Ident | Value Ident
+
+-- Function value keeps a list of arguments,
+-- a block of statements (function body), and
+-- an environment from the moment of declaration.
+
+checkMaybe :: Maybe a -> Exception -> InterpreterMonad a
+checkMaybe (Just x) _ = return x
+checkMaybe Nothing e = throwError e
+
+data Val = Vint Integer | Vbool Bool | Vstr String | FVal [Arg] Block Env
+
+bindArgs :: BNFC'Position -> [Arg] -> [Expr] -> Env -> InterpreterMonad Env
+bindArgs _ [] [] env = do
+  (locMap, _) <- get
+  return env
+bindArgs pos ((Arg _ (ArgTypeVal _ t) (Ident ident)) : args) (expr : exprs) env = do
+  val <- evalExpr expr
+  (locMap, nextLoc) <- get
+  put (M.insert nextLoc val locMap, nextLoc + 1)
+  let updatedEnv = M.insert ident nextLoc env
+  bindArgs pos args exprs updatedEnv
+bindArgs pos ((Arg _ (ArgTypeRef _ t) (Ident ident)) : args) ((EVar _ (Ident ident')) : exprs) env = do
+  loc <- checkMaybe (M.lookup ident' env) $ VariableNotDeclared ident' $ posToLC pos
+  let updatedEnv = M.insert ident loc env
+  bindArgs pos args exprs updatedEnv
+bindArgs pos _ _ _ = throwError $ InvalidPassByReference $ posToLC pos
 
 instance Show Val where
   show (Vint n) = show n
   show (Vbool b) = show b
   show (Vstr s) = s
+  show (FVal args block env) = "Function: " ++ show args ++ " " ++ show env
 
 type Loc = Integer
 
@@ -24,6 +58,9 @@ type Name = String
 type Env = M.Map Name Loc
 
 type LocMap = M.Map Loc Val
+
+-- instance Show LocMap where
+--   show locMap = show $ M.toList locMap
 
 type RetVal = Maybe Val
 
@@ -40,9 +77,9 @@ insertItems _ [] = do
   env <- ask
   return (env, Nothing)
 insertItems t ((Init pos (Ident ident) expr) : tail) = do
+  val <- evalExpr expr
   env <- ask
   (locMap, nextLoc) <- get
-  val <- evalExpr expr
   put (M.insert nextLoc val locMap, nextLoc + 1)
   let updatedEnv = M.insert ident nextLoc env
   return (updatedEnv, Nothing)
@@ -70,6 +107,15 @@ interpretStmts (stmt : stmts) = do
     Nothing -> local (const env) (interpretStmts stmts)
 
 interpretStmt :: Stmt -> InterpreterMonad (Env, RetVal)
+-- function definition: add a new function to the environment
+interpretStmt (FnDef pos t (Ident ident) args (Block _ stmts)) = do
+  env <- ask
+  (locMap, nextLoc) <- get
+  let env' = M.insert ident nextLoc env
+  let store' = M.insert nextLoc (FVal args (Block pos stmts) env') locMap
+  put (store', nextLoc + 1)
+  return (env', Nothing)
+
 -- empty statement
 interpretStmt (Empty _) = do
   env <- ask
@@ -79,8 +125,6 @@ interpretStmt (Empty _) = do
 interpretStmt (BStmt _ (Block _ stmts)) = interpretStmts stmts
 -- variable declaration: add a new variable to the environment
 interpretStmt (Decl pos t items) = do
-  -- print debug info
-  let x = print "Decl"
   (updatedEnv, rV) <- insertItems t items
   return (updatedEnv, rV)
 
@@ -136,6 +180,7 @@ interpretStmt (Decr pos (Ident ident)) = do
 interpretStmt (Ret pos expr) = do
   env <- ask
   val <- evalExpr expr
+  (locMap, _) <- get
   return (env, Just val)
 
 -- Conditional statement
@@ -192,7 +237,6 @@ evalExpr (ELitInt _ n) = return $ Vint n
 evalExpr (ELitTrue _) = return $ Vbool True
 -- false literal expression:
 evalExpr (ELitFalse _) = return $ Vbool False
--- TODO: function application
 -- print expression:
 evalExpr (EApp pos (Ident "print") [expr]) = do
   val <- evalExpr expr
@@ -206,6 +250,20 @@ evalExpr (EApp pos (Ident "readInt") []) = do
 evalExpr (EApp pos (Ident "readString") []) = do
   s <- liftIO getLine
   return $ Vstr s
+
+-- TODO: function application
+evalExpr (EApp pos (Ident ident) args) = do
+  env <- ask
+  (locMap, nextLoc) <- get
+  loc <- checkMaybe (M.lookup ident env) $ VariableNotDeclared ident $ posToLC pos
+  (FVal formalArgs block fEnv) <- checkMaybe (M.lookup loc locMap) $ VariableNotDeclared ident $ posToLC pos
+
+  updatedEnv <- bindArgs pos formalArgs args fEnv
+  (_, rV) <- local (const updatedEnv) (interpretStmts [BStmt pos block])
+  (locMap, _) <- get
+  case rV of
+    Just val -> return val
+    Nothing -> throwError $ NoReturn $ posToLC pos
 
 -- TODO: lambda application
 

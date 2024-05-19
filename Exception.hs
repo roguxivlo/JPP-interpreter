@@ -23,6 +23,8 @@ data Exception
   | BadNumberOfArguments Int Int (Line, Col)
   | FunctionNotDefined VarName (Line, Col)
   | DivisionByZero (Line, Col)
+  | InvalidPassByReference (Line, Col)
+  | NoReturn (Line, Col)
   | Other (Line, Col)
 
 instance Show Exception where
@@ -32,3 +34,5 @@ instance Show Exception where
   show (Other (line, col)) = "Error at line " ++ show line ++ ", column " ++ show col
   show (FunctionNotDefined name (line, col)) = "Function " ++ name ++ " at line " ++ show line ++ " column " ++ show col ++ " not defined."
   show (DivisionByZero (line, col)) = "Division by zero at line " ++ show line ++ ", column " ++ show col
+  show (InvalidPassByReference (line, col)) = "Invalid pass by reference at line " ++ show line ++ ", column " ++ show col
+  show (NoReturn (line, col)) = "Function returned nothing at line " ++ show line ++ ", column " ++ show col

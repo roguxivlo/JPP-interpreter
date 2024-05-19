@@ -1,0 +1,19 @@
+// Expected output:
+/*
+abc
+abc
+abc
+xyz
+
+*/
+
+string x = "abc";
+
+string y(ref string xx) {
+    xx = "xyz";
+    return xx;
+}
+
+string z = y(x);
+
+print(x); // xyz

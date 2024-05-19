@@ -1,0 +1,14 @@
+int add1 (int x) {
+  return x + 1;
+}
+
+int y = 15;
+
+int main () {
+  int x = 10;
+  int z = add1(x); // z = 11
+  int w = add1(y); // w = 16
+  return z + w;
+}
+
+print(main());

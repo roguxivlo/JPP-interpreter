@@ -1,4 +1,7 @@
-module Types where
+-- Type checking for MyLatte language
+{-# LANGUAGE ImportQualifiedPost #-}
+
+module Types (typeCheck) where
 
 import Control.Monad.Except
 import Control.Monad.Reader

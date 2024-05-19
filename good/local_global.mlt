@@ -1,0 +1,9 @@
+int x = 66;
+int counter = readInt();
+
+while (counter > 0) {
+    int x = 15;
+    print(x);
+    counter = counter - 1;
+}
+print(x);
