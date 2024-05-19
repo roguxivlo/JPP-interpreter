@@ -39,9 +39,10 @@ bindArgs pos ((Arg _ (ArgTypeVal _ t) (Ident ident)) : args) (expr : exprs) env 
   put (M.insert nextLoc val locMap, nextLoc + 1)
   let updatedEnv = M.insert ident nextLoc env
   bindArgs pos args exprs updatedEnv
-bindArgs pos ((Arg _ (ArgTypeRef _ t) (Ident ident)) : args) ((EVar _ (Ident ident')) : exprs) env = do
+bindArgs pos ((Arg _ (ArgTypeRef _ t) (Ident ident)) : args) ((EVar _ (Ident ident')) : exprs) fEnv = do
+  env <- ask
   loc <- checkMaybe (M.lookup ident' env) $ VariableNotDeclared ident' $ posToLC pos
-  let updatedEnv = M.insert ident loc env
+  let updatedEnv = M.insert ident loc fEnv
   bindArgs pos args exprs updatedEnv
 bindArgs pos _ _ _ = throwError $ InvalidPassByReference $ posToLC pos
 
@@ -82,6 +83,7 @@ insertItems t ((Init pos (Ident ident) expr) : tail) = do
   (locMap, nextLoc) <- get
   put (M.insert nextLoc val locMap, nextLoc + 1)
   let updatedEnv = M.insert ident nextLoc env
+  (locMap, nextLoc) <- get
   return (updatedEnv, Nothing)
 -- uninitialized variable has to be initialized before use
 insertItems t ((NoInit pos (Ident ident)) : tail) = do
@@ -92,7 +94,7 @@ insertItems t ((NoInit pos (Ident ident)) : tail) = do
     Bool _ -> return $ M.insert nextLoc (Vbool False) locMap
     Str _ -> return $ M.insert nextLoc (Vstr "") locMap
 
-  put (locMap, nextLoc + 1)
+  put (updatedLocMap, nextLoc + 1)
   let updatedEnv = M.insert ident nextLoc env
   return (updatedEnv, Nothing)
 

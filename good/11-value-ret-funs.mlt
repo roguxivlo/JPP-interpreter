@@ -1,0 +1,7 @@
+int main() { return 15;}
+string foo() { return "foo"; }
+boolean bar() { return true; }
+
+print(foo());
+print(bar());
+print(main());

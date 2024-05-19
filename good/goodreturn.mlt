@@ -1,3 +1,0 @@
-int main() {return 1+22;}
-
-int x = 1, y = main();

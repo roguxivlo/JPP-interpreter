@@ -1,2 +1,0 @@
-string x = print("Hello!");
-print(x); // prints "Hello!"

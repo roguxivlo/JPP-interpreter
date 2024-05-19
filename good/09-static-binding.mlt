@@ -1,4 +1,5 @@
 int x = 66;
+print("Podaj liczbe: ");
 int counter = readInt();
 
 while (counter > 0) {

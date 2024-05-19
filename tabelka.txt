@@ -4,7 +4,7 @@ Na 15 punktów
   03 (zmienne, przypisanie) done
   04 (print) done
   05 (while, if) done
-  06 (funkcje lub procedury, rekurencja) done (rekurencja testowac)
+  06 (funkcje lub procedury, rekurencja) done
   07 (przez zmienną / przez wartość) done
 Na 20 punktów
   09 (przesłanianie i statyczne wiązanie) done
@@ -13,6 +13,6 @@ Na 20 punktów
 Na 30 punktów
   12 (4) (statyczne typowanie) done
   13 (2) (funkcje zagnieżdżone ze statycznym wiązaniem) done
-  17 (4) (funkcje wyższego rzędu, anonimowe, domknięcia)
+  17 (4) (funkcje wyższego rzędu, anonimowe, domknięcia) brak :(
 
-Razem: 30
+Razem:  26 (wczesniej 30)

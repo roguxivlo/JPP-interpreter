@@ -1,0 +1,14 @@
+string a;
+string b = "Ala";
+string c = "ma";
+string d = "kota";
+
+int a = 15;
+int b;
+
+boolean xx;
+boolean yy = true;
+
+print(yy);
+print(a + b);
+print(c);

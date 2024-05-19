@@ -12,3 +12,11 @@ int main(int z) {
     print(sup(5));
     return 0;
 }
+
+print(main(3));
+
+string sup(int x) {
+    return "hi from outer sup";
+}
+
+print(sup(5));

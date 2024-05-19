@@ -1,0 +1,7 @@
+string x = "Ala";
+
+while(true) {
+    int x;
+}
+
+x = 11;

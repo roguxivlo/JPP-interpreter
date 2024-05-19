@@ -111,6 +111,7 @@ typeCheckStatement (BStmt _ block) = do
   (env, rt) <- ask
   let stms = getStatements block
   local (const (env, rt)) (typeCheckStatements stms)
+  return (env, rt)
 
 -- Declaration: Decl
 typeCheckStatement (Decl _ type_ items) = do
@@ -154,7 +155,10 @@ typeCheckStatement (Ret pos e) = do
 typeCheckStatement (Cond pos e1 stmt) = do
   maybeT <- typeCheckExpr e1
   case maybeT of
-    Just (Bool _) -> typeCheckStatement stmt
+    Just (Bool _) -> do
+      (env, rT) <- ask
+      local (const (env, rT)) (typeCheckStatement stmt)
+      return (env, rT)
     _ -> throwError $ BadType ("Bool", show maybeT) $ posToLC pos
 
 -- If/else statement: CondElse
@@ -162,15 +166,21 @@ typeCheckStatement (CondElse pos e1 s1 s2) = do
   maybeT <- typeCheckExpr e1
   case maybeT of
     Just (Bool _) -> do
-      typeCheckStatement s1
-      typeCheckStatement s2
+      (env, rT) <- ask
+      local (const (env, rT)) (typeCheckStatement s1)
+      local (const (env, rT)) (typeCheckStatement s2)
+      return (env, rT)
     _ -> throwError $ BadType ("Bool", show maybeT) $ posToLC pos
 
 -- While loop: While
 typeCheckStatement (While pos e1 stmt) = do
   maybeT <- typeCheckExpr e1
+
   case maybeT of
-    Just (Bool _) -> typeCheckStatement stmt
+    Just (Bool _) -> do
+      (env, rT) <- ask
+      local (const (env, rT)) (typeCheckStatement stmt)
+      return (env, rT)
     _ -> throwError $ BadType ("Bool", show maybeT) $ posToLC pos
 
 -- Single expression: SExp

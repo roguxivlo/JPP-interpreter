@@ -1,0 +1,14 @@
+int counter = 3;
+
+print("final countdown");
+
+while (counter > 0) {
+    print(counter);
+    counter = counter - 1;
+    if (counter == 0) {
+        print("bye bye");
+    }
+    else {
+        print("...");
+    }
+}

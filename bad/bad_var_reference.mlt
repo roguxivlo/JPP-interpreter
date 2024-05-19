@@ -1,0 +1,6 @@
+int foo(ref int x) {
+    x = 5;
+    return x;
+}
+
+print(foo(3));

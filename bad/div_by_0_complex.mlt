@@ -1,0 +1,15 @@
+boolean foo(boolean a, boolean c) {
+    c = a || true;
+    return a && c;
+}
+
+boolean b = true;
+
+int x = 12;
+
+if (b) {
+    b = foo(b, b);
+    x = 0;
+}
+
+print(2/x);
