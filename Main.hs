@@ -18,7 +18,7 @@ runFile f = do
       hPutStrLn stderr (show err)
     Ok (Program location stmts) -> do
       -- print (Program location stmts)
-      result <- typeCheck (Program location stmts)
+      let result = typeCheck (Program location stmts)
       -- if an error occured, print it to stderr
       case result of
         Left e -> hPutStrLn stderr (show e)

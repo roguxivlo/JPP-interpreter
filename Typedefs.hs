@@ -1,6 +1,7 @@
 module Typedefs where
 
 import Control.Monad.Except
+import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map qualified as M
@@ -30,6 +31,6 @@ type LocMap = M.Map Loc Val
 
 type Store = (LocMap, Loc)
 
-type TypeCheckMonad = ReaderT (Env Type, ReturnType) (ExceptT TypeCheckErr IO)
+type TypeCheckMonad = ReaderT (Env Type, ReturnType) (ExceptT TypeCheckErr Identity)
 
 type InterpreterMonad = ReaderT (Env Loc) (StateT Store (ExceptT RuntimeErr IO))

@@ -4,6 +4,7 @@
 module Types (typeCheck) where
 
 import Control.Monad.Except
+import Control.Monad.Identity
 import Control.Monad.Reader
 import Data.Bool (Bool (True))
 import Data.List (zipWith)
@@ -13,8 +14,6 @@ import Exception
 import MyLatte.Abs
 import Typedefs
 import Utils
-
--- TODO bez IO
 
 -- nie zawsze local? dla deklaracji tak, a reszta nie
 typeCheckStatements :: [Stmt] -> TypeCheckMonad (Env Type, ReturnType)
@@ -274,5 +273,5 @@ typeCheckExpr (EOr pos exp1 exp2) = do
 
 -- TODO: Lambda expressions:
 
-typeCheck :: Program -> IO (Either TypeCheckErr (Env Type, ReturnType))
-typeCheck (Program _ stmts) = runExceptT (runReaderT (typeCheckStatements stmts) (M.empty, Nothing))
+typeCheck :: Program -> Either TypeCheckErr (Env Type, ReturnType)
+typeCheck (Program _ stmts) = runIdentity (runExceptT (runReaderT (typeCheckStatements stmts) (M.empty, Nothing)))
