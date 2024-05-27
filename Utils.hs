@@ -53,7 +53,6 @@ fromArgTypeToType (ArgTypeRef _ argType) = argType
 fromArgTypeToType (ArgTypeVal _ argType) = argType
 
 -- insert arguments into environment:
--- TODO: duplikacje nazw
 insertArgs :: [Arg] -> Env Type -> Env Type
 insertArgs [] env = env
 insertArgs ((Arg _ argType ident) : tail) env = do
@@ -112,3 +111,38 @@ checkNArgs args exprs pos = do
   case nActual == nExpected of
     True -> return ()
     False -> throwError $ BadNumberOfArguments nExpected nActual pos
+
+idToStr :: Ident -> String
+idToStr (Ident s) = s
+
+getArgName :: Arg -> String
+getArgName (Arg _ _ ident) = idToStr ident
+
+-- find first duplicate in a list:
+findDup :: (Eq a) => [a] -> Maybe a
+findDup [] = Nothing
+findDup (x : xs) = case elem x xs of
+  True -> Just x
+  False -> findDup xs
+
+checkArgDups :: [Arg] -> BNFC'Position -> TypeCheckMonad ()
+checkArgDups args pos = do
+  let argNames = map getArgName args
+  case findDup argNames of
+    Just dup -> throwError $ ArgNameRepeated dup pos
+    Nothing -> return ()
+
+checkArgNames :: Ident -> [Arg] -> BNFC'Position -> TypeCheckMonad ()
+checkArgNames ident args pos = do
+  let argNames = map getArgName args
+  case elem (idToStr ident) argNames of
+    True -> throwError $ ArgNameIsFunName pos
+    False -> return ()
+
+validateFunctionIdent :: Ident -> BNFC'Position -> TypeCheckMonad ()
+validateFunctionIdent (Ident ident) pos = do
+  case ident of
+    "print" -> throwError $ IllegalIdent ident pos
+    "readInt" -> throwError $ IllegalIdent ident pos
+    "readString" -> throwError $ IllegalIdent ident pos
+    _ -> return ()

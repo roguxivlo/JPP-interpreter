@@ -96,6 +96,23 @@ instance Show TypeCheckErr where
       ++ ", got "
       ++ showType a
       ++ showBNFC'Position pos
+  show (ArgNameRepeated name pos) =
+    typeCheckMsg
+      ++ "Argument name "
+      ++ name
+      ++ showBNFC'Position pos
+      ++ " repeated."
+  show (IllegalIdent name pos) =
+    typeCheckMsg
+      ++ "Illegal identifier "
+      ++ name
+      ++ showBNFC'Position pos
+  show (ArgNameIsFunName pos) =
+    typeCheckMsg
+      ++ "Argument name is the same as function name"
+      ++ showBNFC'Position pos
+  show (IllegalReturn pos) =
+    typeCheckMsg ++ "Illegal return" ++ showBNFC'Position pos
 
 instance Show RuntimeErr where
   show (Other pos) =

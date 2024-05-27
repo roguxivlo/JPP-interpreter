@@ -23,7 +23,6 @@ typeCheckStatements (head : tail) = do
   local (const (env, rt)) (typeCheckStatements tail)
 
 -- insert arguments into environment:
--- TODO: duplikacje nazw argumentow funkcji
 
 -- insert items into environment:
 insertItems :: [Item] -> Type -> TypeCheckMonad (Env Type, ReturnType)
@@ -45,11 +44,14 @@ typeCheckStatement :: Stmt -> TypeCheckMonad (Env Type, ReturnType)
 -- Function definition: FnDef
 typeCheckStatement (FnDef position returnType ident args block) = do
   (env, rt) <- ask
+  validateFunctionIdent ident position
+  checkArgDups args position
+  -- arguments cannot have the same name as the function:
+  checkArgNames ident args position
   -- insert function into environment:
   let updatedEnv = M.insert ident (getFunctionType returnType args) env
   -- insert arguments into environment:
 
-  -- TODO: argument == nazwa funkcji -- BLAD albo zmienic
   let updatedEnvWithArgs = insertArgs args updatedEnv
   let retType = getReturnTypeFromFun (M.lookup ident updatedEnvWithArgs)
   -- check block:
@@ -92,8 +94,6 @@ typeCheckStatement (Decr pos ident) = do
   case maybeActualT of
     Int _ -> return (env, rt)
     _ -> throwError $ BadType (Int pos, maybeActualT) pos
-
--- TODO: Returning value from function: Ret
 typeCheckStatement (Ret pos e) = do
   (env, rt) <- ask
   rtFromMaybe <- checkRetLegal pos
@@ -147,8 +147,6 @@ checkFunctionArgs (h1 : t1) (h2 : t2) pos = do
   return ()
 
 -- Expressions:
--- bez maybe TODO:
--- TODO: zamiast TypeCheckMonad (Maybe Type) funkcja ma zwracac TypeCheckMonad Type.
 typeCheckExpr :: Expr -> TypeCheckMonad Type
 -- Variable identificator
 typeCheckExpr (EVar pos ident) = do
@@ -167,7 +165,6 @@ typeCheckExpr (ELitFalse pos) = do
 -- "print" function:
 -- takes one argument, a value to print (int or string or boolean)
 -- returns printed value
--- TODO: typechecker ma sprawdzac czy print przedefiniowany TODO
 typeCheckExpr (EApp pos (Ident "print") argExprs) = do
   (env, rt) <- ask
   -- check number of arguments:
