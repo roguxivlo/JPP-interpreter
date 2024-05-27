@@ -1,5 +1,6 @@
 Na 15 punktów
   01 (trzy typy) done
+  operacje na stringach konkat, prowonanie
   02 (literały, arytmetyka, porównania) done
   03 (zmienne, przypisanie) done
   04 (print) done
@@ -9,6 +10,9 @@ Na 15 punktów
 Na 20 punktów
   09 (przesłanianie i statyczne wiązanie) done
   10 (obsługa błędów wykonania) done
+    runtime error, podzielic bledy na runtime i sprawdzania typow
+    powtarzajace sie nazwy parametrow funkcji.
+    redefiniowanie printow, readow
   11 (funkcje zwracające wartość) done
 Na 30 punktów
   12 (4) (statyczne typowanie) done
@@ -16,3 +20,10 @@ Na 30 punktów
   17 (4) (funkcje wyższego rzędu, anonimowe, domknięcia) brak :(
 
 Razem:  26 (wczesniej 30)
+
+
+podzial bledow osobne typy bledow
+brak io w typechecker
+zwracam maybe env zamiast zawsze env
+lepsze wyjatki (bez maybe)
+argumenty powtarzajace sie

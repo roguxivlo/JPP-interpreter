@@ -19,7 +19,7 @@ all : MyLatte/Test Main
 
 # Rules for building the parser.
 
-MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Main.hs Types.hs Interpreter.hs: myLatte.cf
+MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Main.hs Types.hs Interpreter.hs Typedefs.hs Utils.hs:  myLatte.cf
 	bnfc --haskell -d --functor myLatte.cf
 
 %.hs : %.y
@@ -31,7 +31,7 @@ MyLatte/Abs.hs MyLatte/Lex.x MyLatte/Par.y MyLatte/Print.hs MyLatte/Test.hs Main
 MyLatte/Test : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs MyLatte/Test.hs
 	${GHC} ${GHC_OPTS} $@
 
-Main : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs Types.hs Main.hs
+Main : MyLatte/Abs.hs MyLatte/Lex.hs MyLatte/Par.hs MyLatte/Print.hs Interpreter.hs Types.hs Main.hs Typedefs.hs Utils.hs
 	${GHC} ${GHC_OPTS} $@
 
 # Rules for cleaning generated files.

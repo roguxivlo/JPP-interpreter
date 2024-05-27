@@ -6,100 +6,51 @@ module Types (typeCheck) where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Bool (Bool (True))
-import Data.Functor.Classes (eq1)
 import Data.List (zipWith)
 import Data.Map qualified as M
 import Data.Maybe (Maybe, fromMaybe)
 import Exception
 import MyLatte.Abs
-import MyLatte.Abs (ArgType, BNFC'Position)
+import Typedefs
+import Utils
 
-type Env = M.Map Ident Type
+-- TODO bez IO
 
-type ReturnType = Maybe Type
-
-type TypeCheckMonad = ReaderT (Env, ReturnType) (ExceptT Exception IO)
-
--- typeCheckBlock :: Block -> TypeCheckMonad Env
--- typeCheckBlock (Block location statements) = do
-
-typeCheckStatements :: [Stmt] -> TypeCheckMonad (Env, ReturnType)
+-- nie zawsze local? dla deklaracji tak, a reszta nie
+typeCheckStatements :: [Stmt] -> TypeCheckMonad (Env Type, ReturnType)
 typeCheckStatements [] = ask
 typeCheckStatements (head : tail) = do
   (env, rt) <- typeCheckStatement head
   local (const (env, rt)) (typeCheckStatements tail)
 
--- exctract FunctionType from function definition:
-getFunctionType :: Type -> [Arg] -> Type
--- TODO: function returns a function:
--- getFunctionType (NonReferencable)
-
--- function returns string, int or bool:
-getFunctionType returnType args = do
-  let argTypes = map (\(Arg _ argType _) -> argType) args in FunctionType Nothing returnType argTypes
-
-fromArgTypeToType :: ArgType -> Type
-fromArgTypeToType (ArgTypeRef _ argType) = argType
-fromArgTypeToType (ArgTypeVal _ argType) = argType
-
 -- insert arguments into environment:
-insertArgs :: [Arg] -> Env -> Env
-insertArgs [] env = env
-insertArgs ((Arg _ argType ident) : tail) env = do
-  let actualType = fromArgTypeToType argType
-  let updatedEnv = M.insert ident actualType env
-  insertArgs tail updatedEnv
+-- TODO: duplikacje nazw argumentow funkcji
 
 -- insert items into environment:
-insertItems :: [Item] -> Type -> TypeCheckMonad (Env, ReturnType)
+insertItems :: [Item] -> Type -> TypeCheckMonad (Env Type, ReturnType)
 insertItems ((NoInit _ ident) : tail) type_ = do
   (env, rt) <- ask
   let updatedEnv = M.insert ident type_ env
   local (const (updatedEnv, rt)) (insertItems tail type_)
 insertItems ((Init pos ident expr) : tail) type_ = do
   (env, rt) <- ask
-  maybeExprType <- typeCheckExpr expr
-  case cmpTypes (Just type_) maybeExprType of
+  t1 <- typeCheckExpr expr
+  case cmpTypes (Just type_) (Just t1) of
     True -> do
       let updatedEnv = M.insert ident type_ env
       local (const (updatedEnv, rt)) (insertItems tail type_)
-    False -> throwError $ BadType (show type_, show maybeExprType) $ posToLC pos
+    False -> throwError $ BadType (type_, t1) pos
 insertItems [] _ = ask
 
--- Get statements from a block:
-getStatements :: Block -> [Stmt]
-getStatements (Block _ stmts) = stmts
-
-cmpArgTypes :: [ArgType] -> [ArgType] -> Bool
-cmpArgTypes [] [] = True
-cmpArgTypes ((ArgTypeRef _ t1) : tail1) ((ArgTypeRef _ t2) : tail2) = t1 == t2 && cmpArgTypes tail1 tail2
-
-dropArgPos :: ArgType -> ArgType
-dropArgPos (ArgTypeRef _ t) = ArgTypeRef Nothing (dropPos t)
-dropArgPos (ArgTypeVal _ t) = ArgTypeVal Nothing (dropPos t)
-
-dropPos :: Type -> Type
-dropPos (Int _) = Int Nothing
-dropPos (Str _) = Str Nothing
-dropPos (Bool _) = Bool Nothing
-dropPos (FunctionType _ retType args) = FunctionType Nothing (dropPos retType) (map dropArgPos args)
-
-cmpTypes :: Maybe Type -> Maybe Type -> Bool
-cmpTypes (Just (FunctionType _ t1 args1)) (Just (FunctionType _ t2 args2)) = do
-  let cmpArgs = cmpArgTypes args1 args2
-  t1 == t2 && cmpArgs
-cmpTypes (Just (FunctionType _ _ _)) _ = False
-cmpTypes _ (Just (FunctionType _ _ _)) = False
-cmpTypes (Just t1) (Just t2) = dropPos t1 == dropPos t2
-cmpTypes _ _ = False
-
-typeCheckStatement :: Stmt -> TypeCheckMonad (Env, ReturnType)
+typeCheckStatement :: Stmt -> TypeCheckMonad (Env Type, ReturnType)
 -- Function definition: FnDef
 typeCheckStatement (FnDef position returnType ident args block) = do
   (env, rt) <- ask
   -- insert function into environment:
   let updatedEnv = M.insert ident (getFunctionType returnType args) env
   -- insert arguments into environment:
+
+  -- TODO: argument == nazwa funkcji -- BLAD albo zmienic
   let updatedEnvWithArgs = insertArgs args updatedEnv
   let retType = getReturnTypeFromFun (M.lookup ident updatedEnvWithArgs)
   -- check block:
@@ -122,222 +73,206 @@ typeCheckStatement (Decl _ type_ items) = do
 typeCheckStatement (Ass pos ident expr) = do
   expectedT <- typeCheckExpr expr
   (env, rt) <- ask
-  let maybeActualT = M.lookup ident env
-  case cmpTypes maybeActualT expectedT of
+  maybeActualT <- findVarType ident pos
+  case cmpTypes (Just maybeActualT) (Just expectedT) of
     True -> return (env, rt)
-    False -> throwError $ BadType (show expectedT, show maybeActualT) $ posToLC pos
+    False -> throwError $ BadType (expectedT, maybeActualT) pos
 
 -- Incrementation: Incr
 typeCheckStatement (Incr pos ident) = do
   (env, rt) <- ask
-  let maybeActualT = M.lookup ident env
+  maybeActualT <- findVarType ident pos
   case maybeActualT of
-    Just (Int _) -> return (env, rt)
-    _ -> throwError $ BadType ("Int", show maybeActualT) $ posToLC pos
+    Int _ -> return (env, rt)
+    _ -> throwError $ BadType (Int pos, maybeActualT) pos
 
 -- Decrementation: Decr
 typeCheckStatement (Decr pos ident) = do
   (env, rt) <- ask
-  let maybeActualT = M.lookup ident env
+  maybeActualT <- findVarType ident pos
   case maybeActualT of
-    Just (Int _) -> return (env, rt)
-    _ -> throwError $ BadType ("Int", show maybeActualT) $ posToLC pos
+    Int _ -> return (env, rt)
+    _ -> throwError $ BadType (Int pos, maybeActualT) pos
 
 -- TODO: Returning value from function: Ret
 typeCheckStatement (Ret pos e) = do
   (env, rt) <- ask
+  rtFromMaybe <- checkRetLegal pos
   maybeActualRType <- typeCheckExpr e
-  case cmpTypes rt maybeActualRType of
+  case cmpTypes rt (Just maybeActualRType) of
     True -> return (env, rt)
-    False -> throwError $ BadType (show rt, show maybeActualRType) $ posToLC pos
+    False -> throwError $ BadType (rtFromMaybe, maybeActualRType) pos
 
 -- Conditional statement: Cond
 typeCheckStatement (Cond pos e1 stmt) = do
   maybeT <- typeCheckExpr e1
   case maybeT of
-    Just (Bool _) -> do
+    Bool _ -> do
       (env, rT) <- ask
       local (const (env, rT)) (typeCheckStatement stmt)
       return (env, rT)
-    _ -> throwError $ BadType ("Bool", show maybeT) $ posToLC pos
+    _ -> throwError $ BadType (Bool pos, maybeT) pos
 
 -- If/else statement: CondElse
 typeCheckStatement (CondElse pos e1 s1 s2) = do
   maybeT <- typeCheckExpr e1
   case maybeT of
-    Just (Bool _) -> do
+    Bool _ -> do
       (env, rT) <- ask
       local (const (env, rT)) (typeCheckStatement s1)
       local (const (env, rT)) (typeCheckStatement s2)
       return (env, rT)
-    _ -> throwError $ BadType ("Bool", show maybeT) $ posToLC pos
+    _ -> throwError $ BadType (Bool pos, maybeT) pos
 
 -- While loop: While
 typeCheckStatement (While pos e1 stmt) = do
   maybeT <- typeCheckExpr e1
 
   case maybeT of
-    Just (Bool _) -> do
+    Bool _ -> do
       (env, rT) <- ask
       local (const (env, rT)) (typeCheckStatement stmt)
       return (env, rT)
-    _ -> throwError $ BadType ("Bool", show maybeT) $ posToLC pos
+    _ -> throwError $ BadType (Bool pos, maybeT) pos
 
 -- Single expression: SExp
 typeCheckStatement (SExp _ expr) = do
   typeCheckExpr expr
   ask
 
-getArgsFromFun :: Maybe Type -> Maybe [Type]
-getArgsFromFun (Just (FunctionType _ _ [])) = Just []
-getArgsFromFun (Just (FunctionType _ _ args)) = Just (map fromArgTypeToType args)
-getArgsFromFun _ = Nothing
-
-getReturnTypeFromFun :: Maybe Type -> ReturnType
-getReturnTypeFromFun (Just (FunctionType _ retType _)) = Just retType
-getReturnTypeFromFun _ = Nothing
-
-checkNArgs :: Maybe [Type] -> [Expr] -> TypeCheckMonad (Bool, Int, Int)
-checkNArgs (Just args) exprs = do
-  let nArgs = length args
-  let nExprs = length exprs
-  return (nArgs == nExprs, nArgs, nExprs)
-checkNArgs Nothing exprs = do
-  let nExprs = length exprs
-  return (nExprs == 0, 0, nExprs)
+checkFunctionArgs :: [ArgType] -> [Expr] -> BNFC'Position -> TypeCheckMonad ()
+checkFunctionArgs [] [] _ = return ()
+checkFunctionArgs (h1 : t1) (h2 : t2) pos = do
+  argType <- typeCheckExpr h2
+  let expectedType = fromArgTypeToType h1
+  return ()
 
 -- Expressions:
-typeCheckExpr :: Expr -> TypeCheckMonad (Maybe Type)
+-- bez maybe TODO:
+-- TODO: zamiast TypeCheckMonad (Maybe Type) funkcja ma zwracac TypeCheckMonad Type.
+typeCheckExpr :: Expr -> TypeCheckMonad Type
 -- Variable identificator
 typeCheckExpr (EVar pos ident) = do
   (env, rt) <- ask
-  let maybeType = M.lookup ident env
+  maybeType <- findVarType ident pos
   return maybeType
 -- Literals
 typeCheckExpr (ELitInt pos _) = do
-  return $ Just (Int pos)
+  return $ Int pos
 typeCheckExpr (ELitTrue pos) = do
-  return $ Just (Bool pos)
+  return $ Bool pos
 typeCheckExpr (ELitFalse pos) = do
-  return $ Just (Bool pos)
+  return $ Bool pos
 
 -- Function applications:
 -- "print" function:
 -- takes one argument, a value to print (int or string or boolean)
 -- returns printed value
+-- TODO: typechecker ma sprawdzac czy print przedefiniowany TODO
 typeCheckExpr (EApp pos (Ident "print") argExprs) = do
   (env, rt) <- ask
   -- check number of arguments:
   case 1 == (length argExprs) of
-    False -> throwError $ BadNumberOfArguments 1 (length argExprs) $ posToLC pos
+    False -> throwError $ BadNumberOfArguments 1 (length argExprs) pos
     True -> do
       -- check type of argument:
-      maybeArgType <- typeCheckExpr (head argExprs)
-      case maybeArgType of
-        Just (Int _) -> return $ Just (Int pos)
-        Just (Str _) -> return $ Just (Str pos)
-        Just (Bool _) -> return $ Just (Bool pos)
-        _ -> throwError $ BadType ("Int, Str or Bool", show maybeArgType) $ posToLC pos
+      t <- typeCheckExpr (head argExprs)
+      case t of
+        Int _ -> return $ Int pos
+        Str _ -> return $ Str pos
+        Bool _ -> return $ Bool pos
+        _ -> throwError $ BadPrintType t pos
 -- "readInt" function:
 -- takes no arguments, returns integer read from stdin
 typeCheckExpr (EApp pos (Ident "readInt") []) = do
-  return $ Just (Int pos)
+  return $ Int pos
 typeCheckExpr (EApp pos (Ident "readInt") argExprs) = do
-  throwError $ BadNumberOfArguments 0 (length argExprs) $ posToLC pos
+  throwError $ BadNumberOfArguments 0 (length argExprs) pos
 
 -- "readString" function:
 -- takes no arguments, returns string read from stdin
 typeCheckExpr (EApp pos (Ident "readString") []) = do
-  return $ Just (Str pos)
+  return $ Str pos
 typeCheckExpr (EApp pos (Ident "readString") argExprs) = do
-  throwError $ BadNumberOfArguments 0 (length argExprs) $ posToLC pos
+  throwError $ BadNumberOfArguments 0 (length argExprs) pos
 
 -- user defined functions:
 typeCheckExpr (EApp pos ident argExprs) = do
-  (env, rt) <- ask
-  let maybeFType = M.lookup ident env
-  -- check if function exists:
-  case maybeFType of
-    Nothing -> throwError $ FunctionNotDefined (show ident) $ posToLC pos
-    Just _ -> do
-      let maybeArgs = getArgsFromFun maybeFType
-      let maybeReturnType = getReturnTypeFromFun maybeFType
-      (nArgsOk, expected, provided) <- checkNArgs maybeArgs argExprs
-      case nArgsOk of
-        False -> throwError $ BadNumberOfArguments expected provided $ posToLC pos
-        True ->
-          case maybeArgs of
-            Just args -> do
-              maybeArgTypes <- mapM typeCheckExpr argExprs
-              case maybeArgTypes of
-                [] -> do return maybeReturnType
-                _ -> do
-                  let ok = and (zipWith cmpTypes (map Just args) maybeArgTypes)
-                  case ok of
-                    True -> return maybeReturnType
-                    False -> throwError $ BadType ("Function arguments", show maybeArgTypes) $ posToLC pos
+  (rT, argsT) <- findFType ident pos
+  -- check number of arguments
+  checkNArgs argsT argExprs pos
+  -- then if ok, check if types of function arguments match
+  -- the types provided in argExprs.
+  checkFunctionArgs argsT argExprs pos
+  return rT
 
 -- TODO: Lambda Applications:
 
 -- String literal:
 typeCheckExpr (EString pos _) = do
-  return $ Just (Str pos)
+  return $ Str pos
 
 -- Arithmetic Negation:
 typeCheckExpr (Neg pos expr) = do
-  maybeType <- typeCheckExpr expr
-  case maybeType of
-    Just (Int _) -> return $ Just (Int pos)
-    Just _ -> throwError $ BadType ("Int", show maybeType) $ posToLC pos
-    Nothing -> throwError $ Other $ posToLC pos
+  t <- typeCheckExpr expr
+  case t of
+    Int _ -> return $ Int pos
+    _ -> throwError $ BadType (Int pos, t) pos
 
 -- Logical Negation:
 typeCheckExpr (Not pos exp) = do
-  maybeType <- typeCheckExpr exp
-  case maybeType of
-    Just (Str pos) -> throwError $ BadType ("Bool or Int", "String") $ posToLC pos
-    Nothing -> throwError $ Other $ posToLC pos
+  t <- typeCheckExpr exp
+  case t of
+    (Int _) -> return $ Bool pos
+    (Bool _) -> return $ Bool pos
+    _ -> throwError $ BadTypeAlternatives [Int pos, Bool pos] t pos
 
 -- Arithmetic Multiplication:
 typeCheckExpr (EMul pos exp1 _ exp2) = do
-  maybeType1 <- typeCheckExpr exp1
-  maybeType2 <- typeCheckExpr exp2
-  case (maybeType1, maybeType2) of
-    (Just (Int _), Just (Int _)) -> return $ Just (Int pos)
-    _ -> throwError $ BadType ("Int", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
+  t1 <- typeCheckExpr exp1
+  t2 <- typeCheckExpr exp2
+  case (t1, t2) of
+    (Int _, Int _) -> return $ Int pos
+    (Int _, _) -> throwError $ BadType (Int pos, t2) pos
+    _ -> throwError $ BadType (Int pos, t1) pos
 
 -- Arithmetic Addition:
 typeCheckExpr (EAdd pos exp1 _ exp2) = do
-  maybeType1 <- typeCheckExpr exp1
-  maybeType2 <- typeCheckExpr exp2
-  case (maybeType1, maybeType2) of
-    (Just (Int _), Just (Int _)) -> return $ Just (Int pos)
-    _ -> throwError $ BadType ("Int", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
+  t1 <- typeCheckExpr exp1
+  t2 <- typeCheckExpr exp2
+  case (t1, t2) of
+    (Int _, Int _) -> return $ Int pos
+    (Int _, _) -> throwError $ BadType (Int pos, t2) pos
+    _ -> throwError $ BadType (Int pos, t1) pos
 
 -- Relations:
 typeCheckExpr (ERel pos exp1 _ exp2) = do
-  maybeType1 <- typeCheckExpr exp1
-  maybeType2 <- typeCheckExpr exp2
-  case (maybeType1, maybeType2) of
-    (Just (Int _), Just (Int _)) -> return $ Just (Bool pos)
-    _ -> throwError $ BadType ("Int", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
+  t1 <- typeCheckExpr exp1
+  t2 <- typeCheckExpr exp2
+  case (t1, t2) of
+    (Int _, Int _) -> return $ Bool pos
+    (Int _, _) -> throwError $ BadType (Int pos, t2) pos
+    _ -> throwError $ BadType (Int pos, t1) pos
+
 -- Logical And:
 typeCheckExpr (EAnd pos exp1 exp2) = do
-  maybeType1 <- typeCheckExpr exp1
-  maybeType2 <- typeCheckExpr exp2
-  case (maybeType1, maybeType2) of
-    (Just (Bool _), Just (Bool _)) -> return $ Just (Bool pos)
-    _ -> throwError $ BadType ("Bool", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
+  t1 <- typeCheckExpr exp1
+  t2 <- typeCheckExpr exp2
+  case (t1, t2) of
+    (Bool _, Bool _) -> return $ Bool pos
+    (Bool _, _) -> throwError $ BadType (Bool pos, t2) pos
+    _ -> throwError $ BadType (Bool pos, t1) pos
 
 -- Logical Or:
 typeCheckExpr (EOr pos exp1 exp2) = do
-  maybeType1 <- typeCheckExpr exp1
-  maybeType2 <- typeCheckExpr exp2
-  case (maybeType1, maybeType2) of
-    (Just (Bool _), Just (Bool _)) -> return $ Just (Bool pos)
-    _ -> throwError $ BadType ("Bool", show maybeType1 ++ " and " ++ show maybeType2) $ posToLC pos
+  t1 <- typeCheckExpr exp1
+  t2 <- typeCheckExpr exp2
+  case (t1, t2) of
+    (Bool _, Bool _) -> return $ Bool pos
+    (Bool _, _) -> throwError $ BadType (Bool pos, t2) pos
+    _ -> throwError $ BadType (Bool pos, t1) pos
 
 -- TODO: Lambda expressions:
 
-typeCheck :: Program -> IO (Either Exception (Env, ReturnType))
+typeCheck :: Program -> IO (Either TypeCheckErr (Env Type, ReturnType))
 typeCheck (Program _ stmts) = runExceptT (runReaderT (typeCheckStatements stmts) (M.empty, Nothing))
