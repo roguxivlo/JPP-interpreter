@@ -299,4 +299,12 @@ evalExpr (EOr pos expr1 expr2) = do
         _ -> throwError $ Other pos
     _ -> throwError $ Other pos
 
+-- Concatenation:
+evalExpr (Concat pos expr1 expr2) = do
+  val1 <- evalExpr expr1
+  val2 <- evalExpr expr2
+  case (val1, val2) of
+    (Vstr s1, Vstr s2) -> return $ Vstr (s1 ++ s2)
+    _ -> throwError $ Other pos
+
 -- TODO: Lambda expression
