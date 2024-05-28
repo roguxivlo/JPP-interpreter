@@ -268,6 +268,15 @@ typeCheckExpr (EOr pos exp1 exp2) = do
     (Bool _, _) -> throwError $ BadType (Bool pos, t2) pos
     _ -> throwError $ BadType (Bool pos, t1) pos
 
+-- Concatenation:
+typeCheckExpr (Concat pos exp1 exp2) = do
+  t1 <- typeCheckExpr exp1
+  t2 <- typeCheckExpr exp2
+  case (t1, t2) of
+    (Str _, Str _) -> return $ Str pos
+    (Str _, _) -> throwError $ BadType (Str pos, t2) pos
+    _ -> throwError $ BadType (Str pos, t1) pos
+
 -- TODO: Lambda expressions:
 
 typeCheck :: Program -> Either TypeCheckErr (Env Type, ReturnType)

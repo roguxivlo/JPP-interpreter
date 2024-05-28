@@ -1,0 +1,12 @@
+int main() { return 0;}
+
+string a = "Ala";
+
+// ok
+string b = a ++ " ma ";
+
+// ok
+b = "ma" ++ b;
+
+// mismatch
+string c = b ++ main();
