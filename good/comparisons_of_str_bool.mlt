@@ -1,0 +1,29 @@
+int a = 4;
+int c = 5;
+
+print(a == c);
+print(a != c);
+print(a <= c);
+print(a >= c);
+print(a < c);
+print(a > c);
+
+string x = "a";
+string y = "b";
+
+print(x == y);
+print(x != y);
+print(x <= y);
+print(x >= y);
+print(x < y);
+print(x > y);
+
+boolean z = true;
+boolean w = false;
+
+print(z == w);
+print(z != w);
+print(z <= w);
+print(z >= w);
+print(z < w);
+print(z > w);

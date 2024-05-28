@@ -19,6 +19,18 @@ instance Show Val where
   show (Vstr s) = s
   show (FVal args block env) = "Function: " ++ show args ++ " " ++ show env
 
+instance Eq Val where
+  (Vint n) == (Vint m) = n == m
+  (Vbool b) == (Vbool c) = b == c
+  (Vstr s) == (Vstr t) = s == t
+  _ == _ = False
+
+instance Ord Val where
+  (Vint n) <= (Vint m) = n <= m
+  (Vbool b) <= (Vbool c) = b <= c
+  (Vstr s) <= (Vstr t) = s <= t
+  _ <= _ = False
+
 type Loc = Integer
 
 type Name = String

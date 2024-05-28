@@ -241,14 +241,18 @@ typeCheckExpr (EAdd pos exp1 _ exp2) = do
     (Int _, _) -> throwError $ BadType (Int pos, t2) pos
     _ -> throwError $ BadType (Int pos, t1) pos
 
--- Relations:
+-- Relations and Comparisons:
 typeCheckExpr (ERel pos exp1 _ exp2) = do
   t1 <- typeCheckExpr exp1
   t2 <- typeCheckExpr exp2
   case (t1, t2) of
     (Int _, Int _) -> return $ Bool pos
+    (Str _, Str _) -> return $ Bool pos
+    (Bool _, Bool _) -> return $ Bool pos
     (Int _, _) -> throwError $ BadType (Int pos, t2) pos
-    _ -> throwError $ BadType (Int pos, t1) pos
+    (Str _, _) -> throwError $ BadType (Str pos, t2) pos
+    (Bool _, _) -> throwError $ BadType (Bool pos, t2) pos
+    _ -> throwError $ BadTypeAlternatives [Int pos, Str pos, Bool pos] t1 pos
 
 -- Logical And:
 typeCheckExpr (EAnd pos exp1 exp2) = do

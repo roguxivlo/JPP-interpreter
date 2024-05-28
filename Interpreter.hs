@@ -265,15 +265,13 @@ evalExpr (EAdd pos expr1 (Minus _) expr2) = do
 evalExpr (ERel pos expr1 op expr2) = do
   val1 <- evalExpr expr1
   val2 <- evalExpr expr2
-  case (val1, val2) of
-    (Vint n1, Vint n2) -> case op of
-      LTH _ -> return $ Vbool (n1 < n2)
-      LE _ -> return $ Vbool (n1 <= n2)
-      GTH _ -> return $ Vbool (n1 > n2)
-      GE _ -> return $ Vbool (n1 >= n2)
-      EQU _ -> return $ Vbool (n1 == n2)
-      NE _ -> return $ Vbool (n1 /= n2)
-    _ -> throwError $ Other pos
+  case op of
+    LTH _ -> return $ Vbool (val1 < val2)
+    LE _ -> return $ Vbool (val1 <= val2)
+    GTH _ -> return $ Vbool (val1 > val2)
+    GE _ -> return $ Vbool (val1 >= val2)
+    EQU _ -> return $ Vbool (val1 == val2)
+    NE _ -> return $ Vbool (val1 /= val2)
 
 -- logical and:
 evalExpr (EAnd pos expr1 expr2) = do
