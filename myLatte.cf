@@ -78,6 +78,8 @@ LApp.              Expr6 ::= "lambda" "(" [Arg] ")" Block "("[Expr]")";
 
 EString.           Expr6 ::= String ;
 
+Concat.            Expr6 ::= Expr6 "++" Expr6 ;
+
 Neg.               Expr5 ::= "-" Expr6 ;
 
 Not.               Expr5 ::= "!" Expr6 ;
