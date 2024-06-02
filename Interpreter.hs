@@ -75,7 +75,7 @@ interpretStmt (FnDef pos t (Ident ident) args (Block _ stmts)) = do
   env <- ask
   (locMap, nextLoc) <- get
   let env' = M.insert (Ident ident) nextLoc env
-  let store' = M.insert nextLoc (FVal args (Block pos stmts) env') locMap
+  let store' = M.insert nextLoc (FVal t args (Block pos stmts) env') locMap
   put (store', nextLoc + 1)
   return (env', Nothing)
 
@@ -198,7 +198,7 @@ evalExpr (EApp pos (Ident ident) args) = do
   env <- ask
   (locMap, nextLoc) <- get
   loc <- findVarLoc (Ident ident) pos
-  (FVal formalArgs block fEnv) <- findVal loc pos
+  (FVal rType formalArgs block fEnv) <- findVal loc pos
 
   updatedEnv <- bindArgs pos formalArgs args fEnv
   (_, rV) <- local (const updatedEnv) (interpretStmts [BStmt pos block])

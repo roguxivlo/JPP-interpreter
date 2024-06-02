@@ -144,6 +144,9 @@ checkFunctionArgs [] [] _ = return ()
 checkFunctionArgs (h1 : t1) (h2 : t2) pos = do
   argType <- typeCheckExpr h2
   let expectedType = fromArgTypeToType h1
+  case cmpTypes (Just expectedType) (Just argType) of
+    True -> checkFunctionArgs t1 t2 pos
+    False -> throwError $ BadType (expectedType, argType) pos
   return ()
 
 -- Expressions:
@@ -201,8 +204,6 @@ typeCheckExpr (EApp pos ident argExprs) = do
   -- the types provided in argExprs.
   checkFunctionArgs argsT argExprs pos
   return rT
-
--- TODO: Lambda Applications:
 
 -- String literal:
 typeCheckExpr (EString pos _) = do
@@ -282,6 +283,21 @@ typeCheckExpr (Concat pos exp1 exp2) = do
     _ -> throwError $ BadType (Str pos, t1) pos
 
 -- TODO: Lambda expressions:
+typeCheckExpr (Lexpr pos retType args block) = do
+  (env, rt) <- ask
+  checkArgDups args pos
+  let updatedEnv = insertArgs args env
+  local (const (updatedEnv, Just retType)) (typeCheckStatements [BStmt pos block])
+  return $ getFunctionType retType args
+typeCheckExpr (LApp pos rType args block exprs) = do
+  (env, rt) <- ask
+  let argTypes = map argToArgType args
+  checkArgDups args pos
+  checkNArgs argTypes exprs pos
+  checkFunctionArgs argTypes exprs pos
+  let updatedEnv = insertArgs args env
+  local (const (updatedEnv, Just rType)) (typeCheckStatements [BStmt pos block])
+  return rType
 
 typeCheck :: Program -> Either TypeCheckErr (Env Type, ReturnType)
 typeCheck (Program _ stmts) = runIdentity (runExceptT (runReaderT (typeCheckStatements stmts) (M.empty, Nothing)))

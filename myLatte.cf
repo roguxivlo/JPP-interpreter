@@ -74,7 +74,7 @@ ELitFalse.         Expr6 ::= "false" ;
 
 EApp.              Expr6 ::= Ident "(" [Expr] ")" ;
 
-LApp.              Expr6 ::= "lambda" "(" [Arg] ")" Block "("[Expr]")";
+LApp.              Expr6 ::= "lambda" Type "(" [Arg] ")" Block "("[Expr]")";
 
 EString.           Expr6 ::= String ;
 
@@ -94,7 +94,7 @@ EAnd.              Expr1 ::= Expr2 "&&" Expr1 ;
 
 EOr.               Expr ::= Expr1 "||" Expr ;
 
-Lexpr.             Expr ::= "lambda" "(" [Arg] ")" Block ;
+Lexpr.             Expr ::= "lambda" Type "(" [Arg] ")" Block ;
 
 coercions          Expr 6 ;
 

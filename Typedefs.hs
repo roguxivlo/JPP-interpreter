@@ -8,16 +8,17 @@ import Data.Map qualified as M
 import Data.Maybe
 import Exception
 import MyLatte.Abs
+import Printing
 
 type Env a = M.Map Ident a
 
-data Val = Vint Integer | Vbool Bool | Vstr String | FVal [Arg] Block (Env Loc)
+data Val = Vint Integer | Vbool Bool | Vstr String | FVal Type [Arg] Block (Env Loc)
 
 instance Show Val where
   show (Vint n) = show n
   show (Vbool b) = show b
   show (Vstr s) = s
-  show (FVal args block env) = "Function: " ++ show args ++ " " ++ show env
+  show (FVal rType args block env) = "Function: " ++ show args ++ " -> " ++ showType rType ++ show env
 
 instance Eq Val where
   (Vint n) == (Vint m) = n == m

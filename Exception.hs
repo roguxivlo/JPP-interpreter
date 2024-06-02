@@ -1,6 +1,7 @@
 module Exception where
 
 import MyLatte.Abs
+import Printing
 
 type Line = Int
 
@@ -41,21 +42,6 @@ runtimeMsg = "Runtime Error: "
 showBNFC'Position :: BNFC'Position -> String
 showBNFC'Position pos =
   let (l, c) = posToLC pos in " at line " ++ show l ++ ", column " ++ show c ++ " "
-
-showArgType :: ArgType -> String
-showArgType (ArgTypeRef pos t) = showType t
-showArgType (ArgTypeVal pos t) = showType t
-
-showType :: Type -> String
-showType (FunctionType pos retT argsT) =
-  " Function"
-    ++ showType retT
-    ++ "("
-    ++ foldl (\acc elt -> acc ++ ", " ++ elt) "" (map showArgType argsT)
-    ++ ")"
-showType (Int p) = " Int"
-showType (Str p) = " Str"
-showType (Bool p) = " Bool"
 
 instance Show TypeCheckErr where
   show (BadType (e, a) pos) =

@@ -104,6 +104,9 @@ findFType (Ident ident) pos = do
     Just (FunctionType pos rType argsT) -> return (rType, argsT)
     _ -> throwError $ FunctionNotDefined (show ident) pos
 
+argToArgType :: Arg -> ArgType
+argToArgType (Arg pos argType ident) = argType
+
 checkNArgs :: [ArgType] -> [Expr] -> BNFC'Position -> TypeCheckMonad ()
 checkNArgs args exprs pos = do
   let nActual = length exprs
