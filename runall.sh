@@ -50,4 +50,35 @@ do
     echo "Processed $file"
 done
 
+# in directory good/output/ and bad/output/ there will be .out and .err files\
+# all .err files in good/output/ should be empty
+# all .out files in bad/output/ should be empty
+# all .err files in bad/output/ should not be empty
+
+# Check if all .err files in good/output/ are empty
+echo "Checking good files..."
+for file in "$GOOD_OUTPUT_DIRECTORY"*.err
+do
+    if [ -s "$file" ]; then
+        echo "Error: $file is not empty"
+    fi
+done
+
+# Check if all .out files in bad/output/ are empty
+echo "Checking bad files..."
+for file in "$BAD_OUTPUT_DIRECTORY"*.out
+do
+    if [ -s "$file" ]; then
+        echo "Error: $file is not empty"
+    fi
+done
+
+# Check if all .err files in bad/output/ are not empty
+for file in "$BAD_OUTPUT_DIRECTORY"*.err
+do
+    if [ ! -s "$file" ]; then
+        echo "Error: $file is empty"
+    fi
+done
+
 echo "Processing complete."
