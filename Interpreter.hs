@@ -103,24 +103,24 @@ interpretStmt (Ass pos (Ident ident) expr) = do
   return (env, Nothing)
 
 -- incrementation statement:
-interpretStmt (Incr pos (Ident ident)) = do
-  env <- ask
-  (locMap, nextLoc) <- get
-  loc <- findVarLoc (Ident ident) pos
-  -- let maybeLoc = M.lookup ident env
-  (Vint oldVal) <- findVal loc pos
-  put (M.insert loc (Vint (oldVal + 1)) locMap, nextLoc)
-  return (env, Nothing)
+-- interpretStmt (Incr pos (Ident ident)) = do
+--   env <- ask
+--   (locMap, nextLoc) <- get
+--   loc <- findVarLoc (Ident ident) pos
+--   -- let maybeLoc = M.lookup ident env
+--   (Vint oldVal) <- findVal loc pos
+--   put (M.insert loc (Vint (oldVal + 1)) locMap, nextLoc)
+--   return (env, Nothing)
 
 -- decrementation statement:
-interpretStmt (Decr pos (Ident ident)) = do
-  env <- ask
-  (locMap, nextLoc) <- get
-  loc <- findVarLoc (Ident ident) pos
-  -- let maybeLoc = M.lookup ident env
-  (Vint oldVal) <- findVal loc pos
-  put (M.insert loc (Vint (oldVal - 1)) locMap, nextLoc)
-  return (env, Nothing)
+-- interpretStmt (Decr pos (Ident ident)) = do
+--   env <- ask
+--   (locMap, nextLoc) <- get
+--   loc <- findVarLoc (Ident ident) pos
+--   -- let maybeLoc = M.lookup ident env
+--   (Vint oldVal) <- findVal loc pos
+--   put (M.insert loc (Vint (oldVal - 1)) locMap, nextLoc)
+--   return (env, Nothing)
 
 -- Return statement
 interpretStmt (Ret pos expr) = do

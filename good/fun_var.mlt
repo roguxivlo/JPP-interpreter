@@ -1,0 +1,12 @@
+int main() {return 1;}
+
+print(main());
+
+int foo(ref int() x) {
+  x = lambda int <- () { return 2; };
+  return x();
+}
+
+print(foo(main));
+
+print(main());

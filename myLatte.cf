@@ -1,5 +1,7 @@
 -- programs ------------------------------------------------
 
+-- wiazanie konkatenacji
+
 entrypoints        Program ;
 
 Program.           Program ::= [Stmt] ;
@@ -36,10 +38,6 @@ separator nonempty Item "," ;
 
 Ass.               Stmt ::= Ident "=" Expr  ";" ;
 
-Incr.              Stmt ::= Ident "++"  ";" ;
-
-Decr.              Stmt ::= Ident "--"  ";" ;
-
 Ret.               Stmt ::= "return" Expr ";" ;
 
 Cond.              Stmt ::= "if" "(" Expr ")" Stmt  ;
@@ -64,23 +62,23 @@ separator          Type "," ;
 
 -- Expressions ---------------------------------------------
 
-EVar.              Expr6 ::= Ident ;
+EVar.              Expr7 ::= Ident ;
 
-ELitInt.           Expr6 ::= Integer ;
+ELitInt.           Expr7 ::= Integer ;
 
-ELitTrue.          Expr6 ::= "true" ;
+ELitTrue.          Expr7 ::= "true" ;
 
-ELitFalse.         Expr6 ::= "false" ;
+ELitFalse.         Expr7 ::= "false" ;
 
-EApp.              Expr6 ::= Ident "(" [Expr] ")" ;
+EApp.              Expr7 ::= Ident "(" [Expr] ")" ;
 
-EString.           Expr6 ::= String ;
+EString.           Expr7 ::= String ;
 
-Concat.            Expr6 ::= Expr6 "++" Expr6 ;
+Concat.            Expr6 ::= Expr6 "++" Expr7 ;
 
-Neg.               Expr5 ::= "-" Expr6 ;
+Neg.               Expr5 ::= "-" Expr7 ;
 
-Not.               Expr5 ::= "!" Expr6 ;
+Not.               Expr5 ::= "!" Expr7 ;
 
 EMul.              Expr4 ::= Expr4 MulOp Expr5 ;
 
@@ -96,7 +94,7 @@ LExpr.             Expr ::= "lambda" Type "<-" "(" [Arg] ")" Block ;
 
 LApp.              Expr ::= "lambda" Type "<-" "(" [Arg] ")" Block "("[Expr]")";
 
-coercions          Expr 6 ;
+coercions          Expr 7 ;
 
 separator          Expr "," ;
 

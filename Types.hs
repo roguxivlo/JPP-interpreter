@@ -80,20 +80,20 @@ typeCheckStatement (Ass pos ident expr) = do
     False -> throwError $ BadType (expectedT, maybeActualT) pos
 
 -- Incrementation: Incr
-typeCheckStatement (Incr pos ident) = do
-  (env, rt) <- ask
-  maybeActualT <- findVarType ident pos
-  case maybeActualT of
-    Int _ -> return (env, rt)
-    _ -> throwError $ BadType (Int pos, maybeActualT) pos
+-- typeCheckStatement (Incr pos ident) = do
+--   (env, rt) <- ask
+--   maybeActualT <- findVarType ident pos
+--   case maybeActualT of
+--     Int _ -> return (env, rt)
+--     _ -> throwError $ BadType (Int pos, maybeActualT) pos
 
 -- Decrementation: Decr
-typeCheckStatement (Decr pos ident) = do
-  (env, rt) <- ask
-  maybeActualT <- findVarType ident pos
-  case maybeActualT of
-    Int _ -> return (env, rt)
-    _ -> throwError $ BadType (Int pos, maybeActualT) pos
+-- typeCheckStatement (Decr pos ident) = do
+--   (env, rt) <- ask
+--   maybeActualT <- findVarType ident pos
+--   case maybeActualT of
+--     Int _ -> return (env, rt)
+--     _ -> throwError $ BadType (Int pos, maybeActualT) pos
 typeCheckStatement (Ret pos e) = do
   (env, rt) <- ask
   rtFromMaybe <- checkRetLegal pos

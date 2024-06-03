@@ -3,7 +3,8 @@ int someFun(int a, ref int b) {
 }
 
 int(int) adderMaker( int a) {
-    return lambda int <- ( int b) { return a+b; };
+    int( int) adder = lambda int <- ( int b) { return a+b; };
+    return adder;
 }
 
 int composer( int a,  int b, int( int,  int) f) {
