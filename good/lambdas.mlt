@@ -1,0 +1,24 @@
+int someFun(int a, ref int b) {
+    return a+b;
+}
+
+int(int) adderMaker( int a) {
+    return lambda int <- ( int b) { return a+b; };
+}
+
+int composer( int a,  int b, int( int,  int) f) {
+    return f(a,b);
+}
+
+string ( int,  string) myFunc = lambda string <- ( int a,  string b) { return b; };
+
+
+int( int, ref int) myFunc2 = someFun;
+
+// Anonymous functions:
+    int x = lambda int <- ( int a) { return a; } (123);
+    print(x); // 123
+
+int( int) add10 = adderMaker(10);
+print(add10(5)); // 15
+

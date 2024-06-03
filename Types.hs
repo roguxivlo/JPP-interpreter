@@ -100,7 +100,8 @@ typeCheckStatement (Ret pos e) = do
   maybeActualRType <- typeCheckExpr e
   case cmpTypes rt (Just maybeActualRType) of
     True -> return (env, rt)
-    False -> throwError $ BadType (rtFromMaybe, maybeActualRType) pos
+    False -> do
+      throwError $ BadType (rtFromMaybe, maybeActualRType) pos
 
 -- Conditional statement: Cond
 typeCheckStatement (Cond pos e1 stmt) = do
@@ -283,7 +284,7 @@ typeCheckExpr (Concat pos exp1 exp2) = do
     _ -> throwError $ BadType (Str pos, t1) pos
 
 -- TODO: Lambda expressions:
-typeCheckExpr (Lexpr pos retType args block) = do
+typeCheckExpr (LExpr pos retType args block) = do
   (env, rt) <- ask
   checkArgDups args pos
   let updatedEnv = insertArgs args env

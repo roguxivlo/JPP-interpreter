@@ -66,7 +66,9 @@ getStatements (Block _ stmts) = stmts
 
 cmpArgTypes :: [ArgType] -> [ArgType] -> Bool
 cmpArgTypes [] [] = True
-cmpArgTypes ((ArgTypeRef _ t1) : tail1) ((ArgTypeRef _ t2) : tail2) = t1 == t2 && cmpArgTypes tail1 tail2
+cmpArgTypes ((ArgTypeRef _ t1) : tail1) ((ArgTypeRef _ t2) : tail2) = cmpTypes (Just t1) (Just t2) && cmpArgTypes tail1 tail2
+cmpArgTypes ((ArgTypeVal _ t1) : tail1) ((ArgTypeVal _ t2) : tail2) = cmpTypes (Just t1) (Just t2) && cmpArgTypes tail1 tail2
+cmpArgTypes _ _ = False
 
 dropArgPos :: ArgType -> ArgType
 dropArgPos (ArgTypeRef _ t) = ArgTypeRef Nothing (dropPos t)
@@ -81,7 +83,7 @@ dropPos (FunctionType _ retType args) = FunctionType Nothing (dropPos retType) (
 cmpTypes :: Maybe Type -> Maybe Type -> Bool
 cmpTypes (Just (FunctionType _ t1 args1)) (Just (FunctionType _ t2 args2)) = do
   let cmpArgs = cmpArgTypes args1 args2
-  t1 == t2 && cmpArgs
+  cmpTypes (Just t1) (Just t2) && cmpArgs
 cmpTypes (Just (FunctionType _ _ _)) _ = False
 cmpTypes _ (Just (FunctionType _ _ _)) = False
 cmpTypes (Just t1) (Just t2) = dropPos t1 == dropPos t2

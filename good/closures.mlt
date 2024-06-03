@@ -1,0 +1,11 @@
+int() counter = lambda int() <- () { 
+        int count = 0;
+        return lambda int <- (){ 
+            count = count + 1;
+            return count;
+        };
+        }();
+
+    print(counter()); // 1
+    print(counter()); // 2
+    print(counter()); // 3

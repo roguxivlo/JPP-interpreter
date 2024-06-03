@@ -193,7 +193,7 @@ evalExpr (EApp pos (Ident "readString") []) = do
   s <- liftIO getLine
   return $ Vstr s
 
--- TODO: function application
+-- function application:
 evalExpr (EApp pos (Ident ident) args) = do
   env <- ask
   (locMap, nextLoc) <- get
@@ -206,8 +206,6 @@ evalExpr (EApp pos (Ident ident) args) = do
   case rV of
     Just val -> return val
     Nothing -> throwError $ NoReturn pos
-
--- TODO: lambda application
 
 -- string literal:
 evalExpr (EString _ s) = return $ Vstr s
@@ -306,3 +304,17 @@ evalExpr (Concat pos expr1 expr2) = do
     _ -> throwError $ Other pos
 
 -- TODO: Lambda expression
+evalExpr (LExpr pos rType args block) = do
+  env <- ask
+  return $ FVal rType args block env
+
+-- Lambda application
+evalExpr (LApp pos rType args block exprs) = do
+  env <- ask
+  (locMap, nextLoc) <- get
+
+  updatedEnv <- bindArgs pos args exprs env
+  (_, rV) <- local (const updatedEnv) (interpretStmts [BStmt pos block])
+  case rV of
+    Just val -> return val
+    Nothing -> throwError $ NoReturn pos

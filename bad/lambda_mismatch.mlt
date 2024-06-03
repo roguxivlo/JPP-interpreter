@@ -1,9 +1,9 @@
 int(string) main (int (ref int) fun) {
-    int(string) fun = lambda string (string x) {print (x); return x;};
+    int(string) fun = lambda string <- (string x) {print (x); return x;};
 
     return fun;
 }
 
-int(ref int) myL = lambda int (ref int x) {print (x); return x;};
+int(ref int) myL = lambda int <- (ref int x) {print (x); return x;};
 
 int (int) bad_res = main (myL);
