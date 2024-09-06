@@ -1,4 +1,52 @@
-# Nowe pliki przykładowe:
+# Implementation of MyLatte programming language
+
+This is a project developed for the course "Programming Languages and Paradigms"
+at the University of Warsaw in the academic year 2023/2024.
+
+## Language specification
+
+The language supports the following features:
+
+- variables of type int, string and bool
+- arithmetic operations on integers
+- string concatenation and comparisons
+- variable assignment
+- print function
+- if-else statements
+- while loops
+- functions with return values
+- pass by both value and reference
+- anonymous functions
+- closures
+- static type checking
+
+## Implementation
+
+This interpreter and type checker is implemented in Haskell
+language.
+
+## Example programs:
+
+Examples of correct programs can be found in the `good` directory.
+Examples of incorrect programs can be found in the `bad` directory.
+
+## Build
+
+To build the project, run the following command:
+
+```
+make
+```
+
+## Run
+
+To run a file `file.mlt`, run the following command:
+
+```
+./Main <file.mlt>
+```
+
+<!-- # Nowe pliki przykładowe:
 
 1. good/closures.mlt - domknięcia
 2. good/comparisons_of_str_bool.mlt - porównania stringów i booli
@@ -75,4 +123,4 @@ Cechy języka:
    - int readInt()
    - string readString()
 
-4. Można porównywać zmienne typu int, string i boolean.
+4. Można porównywać zmienne typu int, string i boolean. -->
